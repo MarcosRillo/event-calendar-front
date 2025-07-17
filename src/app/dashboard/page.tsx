@@ -1,28 +1,26 @@
 "use client";
 
-
 import { useState } from 'react';
-import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { useAuthStore } from '../../store/authStore';
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const { logout } = useAuthStore();
 
   const handleLogout = async () => {
     setLoading(true);
     setError('');
 
     try {
-      axios.defaults.withCredentials = true;
-      await axios.get('/sanctum/csrf-cookie');
-      await axios.post('/api/logout');
+      await logout();
       console.log('Logout successful');
       router.push('/login');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'An error occurred during logout');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred during logout');
     } finally {
       setLoading(false);
     }

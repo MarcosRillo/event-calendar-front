@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import axios from "axios";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "../../store/authStore";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -11,6 +11,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { login } = useAuthStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,21 +19,13 @@ export default function Login() {
     setError("");
 
     try {
-      axios.defaults.withCredentials = true;
-      await axios.get("/sanctum/csrf-cookie");
-      const response = await axios.post("/api/login", {
-        email,
-        password,
-      });
-      console.log("Login successful:", response.data);
+      await login(email, password);
+      console.log("Login successful");
       router.push("/dashboard");
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(
-        err.response?.data?.message || "An error occurred during logout"
+        err instanceof Error ? err.message : "An error occurred during login"
       );
-      if (err.response?.status === 401) {
-        router.push("/login");
-      }
     } finally {
       setLoading(false);
     }
