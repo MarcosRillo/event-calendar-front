@@ -32,6 +32,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (email: string, password: string) => {
     set({ loading: true, error: null });
     try {
+      // Obtener token CSRF para mayor robustez
+      await axios.get('/sanctum/csrf-cookie');
+      
       const response = await axios.post('/api/login', { email, password });
       set({ user: response.data.user, loading: false });
     } catch (err: unknown) {
@@ -46,6 +49,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     set({ loading: true, error: null });
     try {
+      // Obtener token CSRF para mayor robustez
+      await axios.get('/sanctum/csrf-cookie');
+      
       await axios.post('/api/logout');
       set({ user: null, loading: false });
     } catch (err: unknown) {
@@ -60,6 +66,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   checkAuth: async () => {
     set({ loading: true, error: null });
     try {
+      // Para GET requests no necesitamos CSRF
       const response = await axios.get('/api/user');
       set({ user: response.data, loading: false });
     } catch {
