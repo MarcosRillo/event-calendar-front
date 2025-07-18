@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
+import NavBar from '@/components/NavBar';
 
 interface SuperAdminDashboardData {
   user: {
@@ -122,6 +123,7 @@ export default function SuperAdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <NavBar />
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-6">
