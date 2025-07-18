@@ -1,18 +1,10 @@
 import { create } from 'zustand';
 import { AxiosError } from 'axios';
 import axiosClient from '@/lib/axios';
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: string | null;
-  is_super_admin: boolean;
-  is_organization_admin: boolean;
-}
+import { AuthUser } from '@/types';
 
 interface AuthState {
-  user: User | null;
+  user: AuthUser | null;
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;

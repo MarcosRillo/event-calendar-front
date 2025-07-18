@@ -6,36 +6,12 @@ import { useAuthStore } from '@/store/authStore';
 import axiosClient from '@/lib/axios';
 import { AxiosError } from 'axios';
 import NavBar from '@/components/NavBar';
-
-interface User {
-  id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  role: {
-    id: number;
-    name: string;
-  };
-  organization: {
-    id: number;
-    name: string;
-    slug: string;
-  };
-  created_at: string;
-}
-
-interface UsersData {
-  data: User[];
-  current_page: number;
-  last_page: number;
-  per_page: number;
-  total: number;
-}
+import { User, PaginatedUsers } from '@/types';
 
 export default function UsersManagement() {
   const router = useRouter();
   const { user, isAuthenticated, checkAuth, loading: authLoading } = useAuthStore();
-  const [usersData, setUsersData] = useState<UsersData | null>(null);
+  const [usersData, setUsersData] = useState<PaginatedUsers | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -158,7 +134,7 @@ export default function UsersManagement() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {usersData?.data.map((user) => (
+                {usersData?.data.map((user: User) => (
                   <tr key={user.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>

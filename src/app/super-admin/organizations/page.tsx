@@ -6,28 +6,12 @@ import { useAuthStore } from '@/store/authStore';
 import axiosClient from '@/lib/axios';
 import { AxiosError } from 'axios';
 import NavBar from '@/components/NavBar';
-
-interface Organization {
-  id: number;
-  name: string;
-  slug: string;
-  users_count: number;
-  events_count: number;
-  created_at: string;
-}
-
-interface OrganizationsData {
-  data: Organization[];
-  current_page: number;
-  last_page: number;
-  per_page: number;
-  total: number;
-}
+import { Organization, PaginatedOrganizations } from '@/types';
 
 export default function OrganizationsManagement() {
   const router = useRouter();
   const { user, isAuthenticated, checkAuth, loading: authLoading } = useAuthStore();
-  const [organizationsData, setOrganizationsData] = useState<OrganizationsData | null>(null);
+  const [organizationsData, setOrganizationsData] = useState<PaginatedOrganizations | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -124,7 +108,7 @@ export default function OrganizationsManagement() {
 
         {/* Organizations Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {organizationsData?.data.map((org) => (
+          {organizationsData?.data.map((org: Organization) => (
             <div key={org.id} className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-medium text-gray-900">{org.name}</h3>
@@ -143,13 +127,13 @@ export default function OrganizationsManagement() {
                   <span className="font-medium">Slug:</span> {org.slug}
                 </p>
                 <p className="text-sm text-gray-600">
-                  <span className="font-medium">Users:</span> {org.users_count}
+                  <span className="font-medium">Users:</span> {org.users_count || 0}
                 </p>
                 <p className="text-sm text-gray-600">
-                  <span className="font-medium">Events:</span> {org.events_count}
+                  <span className="font-medium">Events:</span> {org.events_count || 0}
                 </p>
                 <p className="text-sm text-gray-600">
-                  <span className="font-medium">Created:</span> {new Date(org.created_at).toLocaleDateString()}
+                  <span className="font-medium">Created:</span> {org.created_at ? new Date(org.created_at).toLocaleDateString() : 'N/A'}
                 </p>
               </div>
               

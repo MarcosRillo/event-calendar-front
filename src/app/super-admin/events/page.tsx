@@ -6,42 +6,12 @@ import { useAuthStore } from '@/store/authStore';
 import axiosClient from '@/lib/axios';
 import { AxiosError } from 'axios';
 import NavBar from '@/components/NavBar';
-
-interface Event {
-  id: number;
-  title: string;
-  description: string;
-  start_date: string;
-  end_date: string;
-  organization: {
-    id: number;
-    name: string;
-    slug: string;
-  };
-  created_by: {
-    id: number;
-    first_name: string;
-    last_name: string;
-  };
-  status: {
-    id: number;
-    name: string;
-  };
-  created_at: string;
-}
-
-interface EventsData {
-  data: Event[];
-  current_page: number;
-  last_page: number;
-  per_page: number;
-  total: number;
-}
+import { Event, PaginatedEvents } from '@/types';
 
 export default function EventsManagement() {
   const router = useRouter();
   const { user, isAuthenticated, checkAuth, loading: authLoading } = useAuthStore();
-  const [eventsData, setEventsData] = useState<EventsData | null>(null);
+  const [eventsData, setEventsData] = useState<PaginatedEvents | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -143,7 +113,7 @@ export default function EventsManagement() {
           </div>
           
           <div className="divide-y divide-gray-200">
-            {eventsData?.data.map((event) => (
+            {eventsData?.data.map((event: Event) => (
               <div key={event.id} className="p-6 hover:bg-gray-50">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
