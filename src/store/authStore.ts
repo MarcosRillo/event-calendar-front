@@ -5,16 +5,20 @@ interface User {
   id: number;
   name: string;
   email: string;
-  // agrega más campos según tu modelo User
+  role: string | null;
+  is_super_admin: boolean;
+  is_organization_admin: boolean;
 }
 
 interface AuthState {
   user: User | null;
   loading: boolean;
   error: string | null;
+  isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
+  clearError: () => void;
 }
 
 // Configuración global de axios
@@ -28,49 +32,74 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   loading: true,
   error: null,
+  isAuthenticated: false,
 
   login: async (email: string, password: string) => {
     set({ loading: true, error: null });
     try {
-      // Obtener token CSRF para mayor robustez
-      await axios.get('/sanctum/csrf-cookie');
-      
       const response = await axios.post('/api/login', { email, password });
-      set({ user: response.data.user, loading: false });
-    } catch (err: unknown) {
-      const errorMessage = axios.isAxiosError(err) 
-        ? err.response?.data?.message || 'Login failed'
+      
+      set({ 
+        user: response.data.user, 
+        loading: false, 
+        isAuthenticated: true,
+        error: null
+      });
+    } catch (error) {
+      const errorMessage = axios.isAxiosError(error) 
+        ? error.response?.data?.message || 'Login failed'
         : 'Login failed';
-      set({ error: errorMessage, loading: false });
-      throw err;
+      set({ 
+        loading: false, 
+        error: errorMessage,
+        isAuthenticated: false 
+      });
+      throw new Error(errorMessage);
     }
   },
 
   logout: async () => {
     set({ loading: true, error: null });
     try {
-      // Obtener token CSRF para mayor robustez
-      await axios.get('/sanctum/csrf-cookie');
-      
       await axios.post('/api/logout');
-      set({ user: null, loading: false });
-    } catch (err: unknown) {
-      const errorMessage = axios.isAxiosError(err) 
-        ? err.response?.data?.message || 'Logout failed'
-        : 'Logout failed';
-      set({ error: errorMessage, loading: false });
-      throw err;
+      
+      set({ 
+        user: null, 
+        loading: false, 
+        isAuthenticated: false, 
+        error: null 
+      });
+    } catch {
+      // Incluso si el logout falla en el servidor, limpiamos el estado local
+      set({ 
+        user: null, 
+        loading: false, 
+        isAuthenticated: false, 
+        error: null 
+      });
     }
   },
 
   checkAuth: async () => {
     set({ loading: true, error: null });
     try {
-      // Para GET requests no necesitamos CSRF
       const response = await axios.get('/api/user');
-      set({ user: response.data, loading: false });
+      
+      set({ 
+        user: response.data.user, 
+        loading: false, 
+        isAuthenticated: true,
+        error: null
+      });
     } catch {
-      set({ user: null, loading: false });
+      set({ 
+        user: null, 
+        loading: false, 
+        isAuthenticated: false, 
+        error: null 
+      });
     }
   },
+
+  clearError: () => set({ error: null }),
 }));
