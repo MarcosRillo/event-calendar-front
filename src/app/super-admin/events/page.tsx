@@ -16,6 +16,15 @@ interface Event {
     name: string;
     slug: string;
   };
+  created_by: {
+    id: number;
+    first_name: string;
+    last_name: string;
+  };
+  status: {
+    id: number;
+    name: string;
+  };
   created_at: string;
 }
 
@@ -29,7 +38,7 @@ interface EventsData {
 
 export default function EventsManagement() {
   const router = useRouter();
-  const { user, isAuthenticated, checkAuth } = useAuthStore();
+  const { user, isAuthenticated, checkAuth, loading: authLoading } = useAuthStore();
   const [eventsData, setEventsData] = useState<EventsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +79,9 @@ export default function EventsManagement() {
   }, [currentPage]);
 
   useEffect(() => {
+    // No redirigir mientras la autenticación está cargando
+    if (authLoading) return;
+    
     if (!isAuthenticated) {
       router.push('/login');
       return;
@@ -81,9 +93,9 @@ export default function EventsManagement() {
     }
 
     fetchEvents();
-  }, [isAuthenticated, user, router, fetchEvents]);
+  }, [isAuthenticated, user, router, fetchEvents, authLoading]);
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
@@ -155,12 +167,12 @@ export default function EventsManagement() {
                       <div>
                         <span className="font-medium">Start Date:</span>
                         <br />
-                        {new Date(event.start_date).toLocaleDateString()}
+                        {event.start_date ? new Date(event.start_date).toLocaleDateString() : 'Not set'}
                       </div>
                       <div>
                         <span className="font-medium">End Date:</span>
                         <br />
-                        {new Date(event.end_date).toLocaleDateString()}
+                        {event.end_date ? new Date(event.end_date).toLocaleDateString() : 'Not set'}
                       </div>
                     </div>
                   </div>

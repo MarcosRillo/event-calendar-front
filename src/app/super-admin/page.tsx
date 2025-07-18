@@ -34,7 +34,7 @@ interface SuperAdminDashboardData {
 
 export default function SuperAdminDashboard() {
   const router = useRouter();
-  const { user, isAuthenticated, checkAuth } = useAuthStore();
+  const { user, isAuthenticated, checkAuth, loading: authLoading } = useAuthStore();
   const [dashboardData, setDashboardData] = useState<SuperAdminDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +44,9 @@ export default function SuperAdminDashboard() {
   }, [checkAuth]);
 
   useEffect(() => {
+    // No redirigir mientras la autenticación está cargando
+    if (authLoading) return;
+    
     if (!isAuthenticated) {
       router.push('/login');
       return;
@@ -56,7 +59,7 @@ export default function SuperAdminDashboard() {
     }
 
     fetchDashboardData();
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, user, router, authLoading]);
 
   const fetchDashboardData = async () => {
     try {
@@ -88,7 +91,7 @@ export default function SuperAdminDashboard() {
     }
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>

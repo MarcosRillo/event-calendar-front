@@ -23,7 +23,7 @@ interface UsersData {
 
 export default function UsersManagement() {
   const router = useRouter();
-  const { user, isAuthenticated, checkAuth } = useAuthStore();
+  const { user, isAuthenticated, checkAuth, loading: authLoading } = useAuthStore();
   const [usersData, setUsersData] = useState<UsersData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +64,9 @@ export default function UsersManagement() {
   }, [currentPage]);
 
   useEffect(() => {
+    // No redirigir mientras la autenticación está cargando
+    if (authLoading) return;
+    
     if (!isAuthenticated) {
       router.push('/login');
       return;
@@ -75,9 +78,9 @@ export default function UsersManagement() {
     }
 
     fetchUsers();
-  }, [isAuthenticated, user, router, fetchUsers]);
+  }, [isAuthenticated, user, router, fetchUsers, authLoading]);
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
