@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import axios from 'axios';
+import { AxiosError } from 'axios';
+import axiosClient from '@/lib/axios';
 
 interface User {
   id: number;
@@ -21,13 +22,6 @@ interface AuthState {
   clearError: () => void;
 }
 
-// Configuración global de axios
-axios.defaults.withCredentials = true;
-axios.defaults.baseURL = 'http://localhost:8000';
-axios.defaults.headers.common['Accept'] = 'application/json';
-axios.defaults.headers.common['Content-Type'] = 'application/json';
-axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   loading: true,
@@ -37,7 +31,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (email: string, password: string) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.post('/api/login', { email, password });
+      const response = await axiosClient.post('/login', { email, password });
       
       set({ 
         user: response.data.user, 
@@ -46,7 +40,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         error: null
       });
     } catch (error) {
-      const errorMessage = axios.isAxiosError(error) 
+      const errorMessage = error instanceof AxiosError
         ? error.response?.data?.message || 'Login failed'
         : 'Login failed';
       set({ 
@@ -61,7 +55,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     set({ loading: true, error: null });
     try {
-      await axios.post('/api/logout');
+      await axiosClient.post('/logout');
       
       set({ 
         user: null, 
@@ -83,7 +77,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   checkAuth: async () => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.get('/api/user');
+      const response = await axiosClient.get('/user');
       
       set({ 
         user: response.data.user, 

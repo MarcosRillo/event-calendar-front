@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
+import axiosClient from '@/lib/axios';
+import { AxiosError } from 'axios';
 import NavBar from '@/components/NavBar';
 
 interface SuperAdminDashboardData {
@@ -64,28 +66,18 @@ export default function SuperAdminDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/super-admin/dashboard', {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
+      const response = await axiosClient.get('/super-admin/dashboard');
       
-      if (result.success) {
-        setDashboardData(result.data);
+      if (response.data.success) {
+        setDashboardData(response.data.data);
       } else {
-        setError(result.message || 'Failed to load dashboard data');
+        setError(response.data.message || 'Failed to load dashboard data');
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+    } catch (error) {
+      const errorMessage = error instanceof AxiosError
+        ? error.response?.data?.message || 'Error fetching dashboard data'
+        : 'Error fetching dashboard data';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
