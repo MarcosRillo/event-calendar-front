@@ -71,3 +71,43 @@ export interface Event {
   status?: EventStatus;  // Optional status
   created_at: string;
 }
+
+// Dashboard specific types
+export interface DashboardUser {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  created_at: string;
+}
+
+export interface DashboardOrganization {
+  id: number;
+  name: string;
+  slug: string;
+  created_at: string;
+}
+
+// Stats interface for dashboard data
+export interface DashboardStats {
+  total_users: number;
+  total_organizations: number;
+  total_events: number;
+  recent_users: DashboardUser[];
+  recent_organizations: DashboardOrganization[];
+}
+
+export interface SuperAdminDashboardData {
+  user: DashboardUser;
+  stats: DashboardStats;
+}
+
+// Generic dashboard response wrapper that can be reused for different dashboard types
+export interface DashboardResponse<TStats = DashboardStats> {
+  success: boolean;
+  data: {
+    user: DashboardUser;
+    stats: TStats;
+  };
+  message?: string;
+}

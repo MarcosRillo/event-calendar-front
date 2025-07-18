@@ -5,33 +5,7 @@ import { useRouter } from 'next/navigation';
 import axiosClient from '@/lib/axios';
 import { AxiosError } from 'axios';
 import NavBar from '@/components/NavBar';
-
-interface SuperAdminDashboardData {
-  user: {
-    id: number;
-    name: string;
-    email: string;
-    role: string;
-  };
-  stats: {
-    total_users: number;
-    total_organizations: number;
-    total_events: number;
-    recent_users: Array<{
-      id: number;
-      name: string;
-      email: string;
-      role: string;
-      created_at: string;
-    }>;
-    recent_organizations: Array<{
-      id: number;
-      name: string;
-      slug: string;
-      created_at: string;
-    }>;
-  };
-}
+import type { SuperAdminDashboardData, DashboardResponse } from '@/types';
 
 export default function SuperAdminDashboard() {
   const router = useRouter();
@@ -43,10 +17,12 @@ export default function SuperAdminDashboard() {
     fetchDashboardData();
   }, []);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (): Promise<void> => {
     try {
       setLoading(true);
-      const response = await axiosClient.get('/super-admin/dashboard');
+      setError(null);
+      
+      const response = await axiosClient.get<DashboardResponse>('/super-admin/dashboard');
       
       if (response.data.success) {
         setDashboardData(response.data.data);
