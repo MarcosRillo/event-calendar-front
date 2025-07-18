@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/authStore';
+import { useAuth } from '@/hooks/useAuth';
 import axiosClient from '@/lib/axios';
 import { AxiosError } from 'axios';
 import NavBar from '@/components/NavBar';
@@ -36,7 +36,7 @@ interface SuperAdminDashboardData {
 
 export default function SuperAdminDashboard() {
   const router = useRouter();
-  const { user, isAuthenticated, checkAuth, loading: authLoading } = useAuthStore();
+  const { user, isAuthenticated, checkAuth, loading: authLoading } = useAuth();
   const [dashboardData, setDashboardData] = useState<SuperAdminDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/authStore';
+import { useAuth } from '@/hooks/useAuth';
 import axiosClient from '@/lib/axios';
 import { AxiosError } from 'axios';
 import NavBar from '@/components/NavBar';
@@ -10,7 +10,7 @@ import { Organization, PaginatedOrganizations } from '@/types';
 
 export default function OrganizationsManagement() {
   const router = useRouter();
-  const { user, isAuthenticated, checkAuth, loading: authLoading } = useAuthStore();
+  const { user, isAuthenticated, checkAuth, loading: authLoading } = useAuth();
   const [organizationsData, setOrganizationsData] = useState<PaginatedOrganizations | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

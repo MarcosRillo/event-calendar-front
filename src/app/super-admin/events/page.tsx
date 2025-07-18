@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/authStore';
+import { useAuth } from '@/hooks/useAuth';
 import axiosClient from '@/lib/axios';
 import { AxiosError } from 'axios';
 import NavBar from '@/components/NavBar';
@@ -10,7 +10,7 @@ import { Event, PaginatedEvents } from '@/types';
 
 export default function EventsManagement() {
   const router = useRouter();
-  const { user, isAuthenticated, checkAuth, loading: authLoading } = useAuthStore();
+  const { user, isAuthenticated, checkAuth, loading: authLoading } = useAuth();
   const [eventsData, setEventsData] = useState<PaginatedEvents | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

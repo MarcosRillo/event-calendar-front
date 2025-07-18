@@ -2,11 +2,11 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '../store/authStore';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Home() {
   const router = useRouter();
-  const { user, loading, checkAuth } = useAuthStore();
+  const { user, loading, checkAuth } = useAuth();
 
   useEffect(() => {
     checkAuth();

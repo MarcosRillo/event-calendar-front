@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useAuthStore } from '../../store/authStore';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Logout() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
-  const { logout } = useAuthStore();
+  const { logout } = useAuth();
 
   const handleLogout = async () => {
     setLoading(true);
