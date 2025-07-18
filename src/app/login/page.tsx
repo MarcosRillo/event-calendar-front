@@ -1,35 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
+import { useLoginForm } from "@/hooks/useLoginForm";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
-  const { login } = useAuth();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      await login(email, password);
-      console.log("Login successful");
-      router.push("/dashboard");
-    } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "An error occurred during login"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { formData, error, loading, handleChange, handleSubmit } = useLoginForm();
 
   return (
     <div className="w-full max-w-md mx-auto p-8 mt-16 bg-white rounded-2xl shadow-xl border border-blue-100">
@@ -55,8 +30,8 @@ export default function Login() {
           </label>
           <input
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={formData.email}
+            onChange={(e) => handleChange('email', e.target.value)}
             required
             className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="ejemplo@email.com"
@@ -68,8 +43,8 @@ export default function Login() {
           </label>
           <input
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={formData.password}
+            onChange={(e) => handleChange('password', e.target.value)}
             required
             className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="••••••••"
