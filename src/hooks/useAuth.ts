@@ -1,10 +1,38 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { AxiosError } from 'axios';
 import axiosClient from '@/lib/axios';
 import { useAuthStore } from '@/store/authStore';
 
 export function useAuth() {
-  const { user, loading, error, setUser, setLoading, setError, clearError, reset } = useAuthStore();
+  const { user, loading, error, hydrated, setUser, setLoading, setError, clearError, reset } = useAuthStore();
+
+  const checkAuth = useCallback(async () => {
+    // No hacer nada si no se ha hidratado aún
+    if (!hydrated) return;
+    
+    // Si ya hay usuario guardado, no necesitamos verificar nuevamente
+    if (user) return;
+    
+    // Solo verificar si no está cargando
+    if (loading) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await axiosClient.get('/user');
+      setUser(response.data.user);
+    } catch {
+      reset(); // Clear user data on auth failure
+    } finally {
+      setLoading(false);
+    }
+  }, [user, loading, hydrated, setUser, setLoading, setError, reset]);
+
+  // Check auth automatically on hook initialization
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const login = useCallback(async (email: string, password: string) => {
     setLoading(true);
@@ -38,24 +66,10 @@ export function useAuth() {
     }
   }, [setLoading, setError, reset]);
 
-  const checkAuth = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const response = await axiosClient.get('/user');
-      setUser(response.data.user);
-    } catch {
-      reset(); // Clear user data on auth failure
-    } finally {
-      setLoading(false);
-    }
-  }, [setUser, setLoading, setError, reset]);
-
   return {
     // Estado
     user,
-    loading,
+    loading: loading || !hydrated, // Considerar loading si no está hidratado
     error,
     isAuthenticated: !!user,
     

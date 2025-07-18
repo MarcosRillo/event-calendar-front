@@ -11,11 +11,22 @@ const axiosClient = axios.create({
   },
 });
 
-// Interceptor para manejar errores globalmente si es necesario
+// Interceptor para manejar errores globalmente
 axiosClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Aquí podríamos manejar errores globales como tokens expirados
+    // Manejar token expirado o no autorizado
+    if (error.response?.status === 401) {
+      // Limpiar estado de autenticación
+      if (typeof window !== 'undefined') {
+        // Solo en el cliente
+        import('@/store/authStore').then(({ useAuthStore }) => {
+          useAuthStore.getState().reset();
+        });
+        // Redirigir a login
+        window.location.href = '/login';
+      }
+    }
     return Promise.reject(error);
   }
 );

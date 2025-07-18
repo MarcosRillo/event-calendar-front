@@ -1,26 +1,18 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
 import axiosClient from '@/lib/axios';
 import { AxiosError } from 'axios';
 import NavBar from '@/components/NavBar';
 import { User, PaginatedUsers } from '@/types';
 
 export default function UsersManagement() {
-  const router = useRouter();
-  const { user, isAuthenticated, checkAuth, loading: authLoading } = useAuth();
   const [usersData, setUsersData] = useState<PaginatedUsers | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
-  const fetchUsers = useCallback(async () => {
+  const fetchUsers = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
       const response = await axiosClient.get(`/super-admin/users?page=${currentPage}`);
@@ -41,23 +33,10 @@ export default function UsersManagement() {
   }, [currentPage]);
 
   useEffect(() => {
-    // No redirigir mientras la autenticación está cargando
-    if (authLoading) return;
-    
-    if (!isAuthenticated) {
-      router.push('/login');
-      return;
-    }
-
-    if (!user?.is_super_admin) {
-      router.push('/dashboard');
-      return;
-    }
-
     fetchUsers();
-  }, [isAuthenticated, user, router, fetchUsers, authLoading]);
+  }, [fetchUsers]);
 
-  if (authLoading || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
