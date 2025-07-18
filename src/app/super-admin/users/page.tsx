@@ -7,9 +7,18 @@ import NavBar from '@/components/NavBar';
 
 interface User {
   id: number;
-  name: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  role: string;
+  role: {
+    id: number;
+    name: string;
+  };
+  organization: {
+    id: number;
+    name: string;
+    slug: string;
+  };
   created_at: string;
 }
 
@@ -146,6 +155,9 @@ export default function UsersManagement() {
                     Role
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Organization
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Created
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -158,20 +170,26 @@ export default function UsersManagement() {
                   <tr key={user.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {user.first_name} {user.last_name}
+                        </div>
                         <div className="text-sm text-gray-500">{user.email}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        user.role === 'superadmin' 
+                        user.role.name === 'superadmin' 
                           ? 'bg-red-100 text-red-800'
-                          : user.role === 'organization_admin'
+                          : user.role.name === 'organization_admin'
                           ? 'bg-blue-100 text-blue-800'
                           : 'bg-green-100 text-green-800'
                       }`}>
-                        {user.role}
+                        {user.role.name}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{user.organization.name}</div>
+                      <div className="text-sm text-gray-500">{user.organization.slug}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(user.created_at).toLocaleDateString()}
