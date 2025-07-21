@@ -150,7 +150,13 @@ export default function SuperAdminDashboard() {
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-8 flex space-x-4">
+        <div className="mt-8 flex flex-wrap gap-4">
+          <button
+            onClick={() => router.push('/super-admin/organization-requests')}
+            className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700"
+          >
+            Organization Requests
+          </button>
           <button
             onClick={() => router.push('/super-admin/users')}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
