@@ -1,10 +1,22 @@
 "use client";
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from "next/image";
 import { useLoginForm } from "@/hooks/useLoginForm";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Login() {
+  const router = useRouter();
+  const { user, hydrated } = useAuth();
   const { formData, error, loading, handleChange, handleSubmit } = useLoginForm();
+
+  // Redirigir si ya está autenticado
+  useEffect(() => {
+    if (hydrated && user) {
+      router.push('/super-admin');
+    }
+  }, [hydrated, user, router]);
 
   return (
     <div className="w-full max-w-md mx-auto p-8 mt-16 bg-white rounded-2xl shadow-xl border border-blue-100">

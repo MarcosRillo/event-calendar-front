@@ -6,23 +6,21 @@ import { useAuth } from '@/hooks/useAuth';
 
 export default function Home() {
   const router = useRouter();
-  const { user, loading, checkAuth } = useAuth();
+  const { user, loading, hydrated } = useAuth();
 
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
-  useEffect(() => {
-    if (!loading) {
+    // Solo redirigir después de la hidratación
+    if (hydrated) {
       if (user) {
-        router.push('/dashboard');
+        router.push('/super-admin');
       } else {
         router.push('/login');
       }
     }
-  }, [user, loading, router]);
+  }, [user, hydrated, router]);
 
-  if (loading) {
+  // Mostrar loading hasta que se complete la hidratación
+  if (!hydrated || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-blue-600">Cargando...</div>
