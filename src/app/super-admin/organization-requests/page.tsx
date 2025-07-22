@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import axiosClient from '@/lib/axios';
 import NavBar from '@/components/NavBar';
 import SendInvitationModal from '@/components/SendInvitationModal';
@@ -28,8 +28,8 @@ interface OrganizationRequest {
     last_name: string;
     email: string;
   };
-  organization_id?: number; // AÑADIDO: También puede existir
-  rejected_reason?: string; // AÑADIDO: También puede existir
+  organization_id?: number;
+  rejected_reason?: string;
   status: {
     id: number;
     name: string;
@@ -53,7 +53,7 @@ interface RequestsResponse {
   success: boolean;
   message?: string;
   data: OrganizationRequest[];
-  pagination: {
+  meta: {
     current_page: number;
     last_page: number;
     per_page: number;
@@ -65,6 +65,7 @@ interface RequestsResponse {
 
 export default function OrganizationRequestsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [requests, setRequests] = useState<OrganizationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -73,7 +74,7 @@ export default function OrganizationRequestsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -83,10 +84,11 @@ export default function OrganizationRequestsPage() {
       params.append('page', currentPage.toString());
 
       const response = await axiosClient.get<RequestsResponse>(`/super-admin/organization-requests?${params}`);
+      
       if (response.data.success && response.data.data && Array.isArray(response.data.data)) {
         setRequests(response.data.data);
-        setCurrentPage(response.data.pagination.current_page);
-        setTotalPages(response.data.pagination.last_page);
+        setCurrentPage(response.data.meta.current_page);
+        setTotalPages(response.data.meta.last_page);
       } else {
         console.error('Invalid response structure:', response.data);
         setRequests([]);
@@ -98,11 +100,23 @@ export default function OrganizationRequestsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter, currentPage]);
 
   useEffect(() => {
     fetchRequests();
-  }, [currentPage, filter]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetchRequests]);
+
+  // Refresh when returning from detail page with refresh parameter
+  useEffect(() => {
+    const refreshParam = searchParams.get('refresh');
+    if (refreshParam) {
+      // Clean URL and refresh data
+      const url = new URL(window.location.href);
+      url.searchParams.delete('refresh');
+      window.history.replaceState({}, '', url.toString());
+      fetchRequests();
+    }
+  }, [searchParams, fetchRequests]);
 
   const getStatusBadge = (status: string) => {
     const styles = {
@@ -154,12 +168,21 @@ export default function OrganizationRequestsPage() {
               <h1 className="text-2xl font-bold text-gray-900">Solicitudes de Organizaciones</h1>
               <p className="text-gray-600">Gestiona las solicitudes de nuevas organizaciones</p>
             </div>
-            <button
-              onClick={() => setShowInviteModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-200"
-            >
-              Enviar Invitación
-            </button>
+            <div className="flex space-x-3">
+              <button
+                onClick={fetchRequests}
+                disabled={loading}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-md transition duration-200 disabled:opacity-50"
+              >
+                {loading ? 'Actualizando...' : '🔄 Actualizar'}
+              </button>
+              <button
+                onClick={() => setShowInviteModal(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-200"
+              >
+                Enviar Invitación
+              </button>
+            </div>
           </div>
         </div>
       </div>
