@@ -16,15 +16,23 @@ interface OrganizationRequest {
   accepted_at?: string;
   created_at: string;
   updated_at: string;
-  status: {
-    id: number;
-    name: string;
-  };
-  created_by: {
+  created_by?: {
     id: number;
     first_name: string;
     last_name: string;
     email: string;
+  };
+  updated_by?: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+  organization_id?: number; // AÑADIDO: También puede existir
+  rejected_reason?: string; // AÑADIDO: También puede existir
+  status: {
+    id: number;
+    name: string;
   };
   organization_data?: {
     name: string;
@@ -43,13 +51,15 @@ interface OrganizationRequest {
 
 interface RequestsResponse {
   success: boolean;
-  message: string;
-  data: {
-    data: OrganizationRequest[];
+  message?: string;
+  data: OrganizationRequest[];
+  pagination: {
     current_page: number;
     last_page: number;
     per_page: number;
     total: number;
+    from: number | null;
+    to: number | null;
   };
 }
 
@@ -73,10 +83,14 @@ export default function OrganizationRequestsPage() {
       params.append('page', currentPage.toString());
 
       const response = await axiosClient.get<RequestsResponse>(`/super-admin/organization-requests?${params}`);
-      if (response.data.success) {
-        setRequests(response.data.data.data);
-        setCurrentPage(response.data.data.current_page);
-        setTotalPages(response.data.data.last_page);
+      if (response.data.success && response.data.data && Array.isArray(response.data.data)) {
+        setRequests(response.data.data);
+        setCurrentPage(response.data.pagination.current_page);
+        setTotalPages(response.data.pagination.last_page);
+      } else {
+        console.error('Invalid response structure:', response.data);
+        setRequests([]);
+        setError('Estructura de respuesta inválida');
       }
     } catch (error) {
       console.error('Error fetching requests:', error);
@@ -184,7 +198,7 @@ export default function OrganizationRequestsPage() {
         {/* Requests Table */}
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           <ul className="divide-y divide-gray-200">
-            {requests.length === 0 ? (
+            {!requests || requests.length === 0 ? (
               <li className="px-6 py-8 text-center text-gray-500">
                 No hay solicitudes que mostrar
               </li>
@@ -203,7 +217,7 @@ export default function OrganizationRequestsPage() {
                               {request.admin_data?.first_name} {request.admin_data?.last_name} ({request.admin_data?.email})
                             </p>
                             <p className="text-xs text-gray-500">
-                              Invitado por: {request.created_by.first_name} {request.created_by.last_name}
+                              Invitado por: {request.created_by ? `${request.created_by.first_name} ${request.created_by.last_name}` : 'Usuario desconocido'}
                             </p>
                           </div>
                           <div className="text-right">
