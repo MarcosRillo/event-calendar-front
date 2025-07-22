@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import axiosClient from '@/lib/axios';
 import NavBar from '@/components/NavBar';
@@ -27,8 +27,8 @@ interface OrganizationRequest {
     last_name: string;
     email: string;
   };
-  organization_id?: number; // AÑADIDO: También puede existir
-  rejected_reason?: string; // AÑADIDO: También puede existir
+  organization_id?: number;
+  rejected_reason?: string;
   status: {
     id: number;
     name: string;
@@ -62,7 +62,7 @@ export default function OrganizationRequestDetailPage() {
   const [actionMessage, setActionMessage] = useState('');
   const [correctionsNotes, setCorrectionsNotes] = useState('');
 
-  const fetchRequest = async () => {
+  const fetchRequest = useCallback(async () => {
     setLoading(true);
     try {
       const response = await axiosClient.get(`/super-admin/organization-requests/${requestId}`);
@@ -77,11 +77,11 @@ export default function OrganizationRequestDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [requestId]);
 
   useEffect(() => {
     fetchRequest();
-  }, [requestId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetchRequest]);
 
   const handleAction = async () => {
     if (!request) return;
@@ -109,8 +109,8 @@ export default function OrganizationRequestDetailPage() {
           'enviada para correcciones'
         } exitosamente`);
         
-        // Redirect to organization requests list
-        router.push('/super-admin/organization-requests');
+        // Redirect to organization requests list with refresh parameter
+        router.push(`/super-admin/organization-requests?refresh=${Date.now()}`);
       } else {
         alert('Error: La operación no fue exitosa');
       }
@@ -120,6 +120,13 @@ export default function OrganizationRequestDetailPage() {
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const openActionModal = (type: 'approve' | 'reject' | 'request_corrections') => {
+    setActionType(type);
+    setActionMessage('');
+    setCorrectionsNotes('');
+    setShowActionModal(true);
   };
 
   const getStatusBadge = (status: string) => {
@@ -146,10 +153,6 @@ export default function OrganizationRequestDetailPage() {
     );
   };
 
-  const canTakeAction = (status: string) => {
-    return status === 'pending' || status === 'corrections_needed';
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -166,15 +169,8 @@ export default function OrganizationRequestDetailPage() {
       <div className="min-h-screen bg-gray-50">
         <NavBar />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-red-50 border border-red-200 rounded-md p-6 text-center">
-            <h3 className="text-lg font-medium text-red-800 mb-2">Error</h3>
-            <p className="text-red-600">{error}</p>
-            <button
-              onClick={() => router.back()}
-              className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-            >
-              Volver
-            </button>
+          <div className="bg-red-50 border border-red-200 rounded-md p-4">
+            <p className="text-red-700">{error || 'Solicitud no encontrada'}</p>
           </div>
         </div>
       </div>
@@ -190,67 +186,31 @@ export default function OrganizationRequestDetailPage() {
           <div className="py-6 flex justify-between items-center">
             <div>
               <button
-                onClick={() => router.back()}
+                onClick={() => router.push('/super-admin/organization-requests')}
                 className="text-blue-600 hover:text-blue-800 mb-2 flex items-center"
               >
                 ← Volver a solicitudes
               </button>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Detalle de Solicitud #{request.id}
-              </h1>
-              <div className="mt-2">
-                {getStatusBadge(request.status.name)}
-              </div>
+              <h1 className="text-2xl font-bold text-gray-900">Detalle de Solicitud</h1>
+              <p className="text-gray-600">Revisa y gestiona la solicitud de organización</p>
             </div>
-            {canTakeAction(request.status.name) && (
-              <div className="flex space-x-3">
-                <button
-                  onClick={() => {
-                    setActionType('approve');
-                    setActionMessage('');
-                    setShowActionModal(true);
-                  }}
-                  className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition duration-200"
-                >
-                  Aprobar
-                </button>
-                <button
-                  onClick={() => {
-                    setActionType('reject');
-                    setActionMessage('');
-                    setShowActionModal(true);
-                  }}
-                  className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition duration-200"
-                >
-                  Rechazar
-                </button>
-                <button
-                  onClick={() => {
-                    setActionType('request_corrections');
-                    setActionMessage('');
-                    setCorrectionsNotes('');
-                    setShowActionModal(true);
-                  }}
-                  className="bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-md transition duration-200"
-                >
-                  Solicitar Correcciones
-                </button>
-              </div>
-            )}
+            <div>
+              {getStatusBadge(request.status.name)}
+            </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Organization Data */}
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Información de la Organización</h3>
-            </div>
-            <div className="p-6 space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Organization Info */}
+            <div className="bg-white shadow rounded-lg p-6">
+              <h2 className="text-lg font-medium text-gray-900 mb-4">Información de la Organización</h2>
+              
               {request.organization_data ? (
-                <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Nombre</label>
                     <p className="mt-1 text-sm text-gray-900">{request.organization_data.name}</p>
@@ -267,107 +227,143 @@ export default function OrganizationRequestDetailPage() {
                     <label className="block text-sm font-medium text-gray-700">Teléfono</label>
                     <p className="mt-1 text-sm text-gray-900">{request.organization_data.phone}</p>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Sitio Web</label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {request.organization_data.website_url ? (
-                        <a 
-                          href={request.organization_data.website_url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          {request.organization_data.website_url}
-                        </a>
-                      ) : (
-                        'No especificado'
-                      )}
-                    </p>
-                  </div>
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700">Dirección</label>
                     <p className="mt-1 text-sm text-gray-900">{request.organization_data.address}</p>
                   </div>
-                </>
+                  {request.organization_data.website_url && (
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700">Sitio Web</label>
+                      <a 
+                        href={request.organization_data.website_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="mt-1 text-sm text-blue-600 hover:text-blue-800"
+                      >
+                        {request.organization_data.website_url}
+                      </a>
+                    </div>
+                  )}
+                </div>
               ) : (
-                <p className="text-gray-500">No se han enviado datos de organización</p>
+                <p className="text-gray-500">No hay datos de organización disponibles</p>
               )}
             </div>
-          </div>
 
-          {/* Admin Data */}
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Información del Administrador</h3>
-            </div>
-            <div className="p-6 space-y-4">
+            {/* Admin Info */}
+            <div className="bg-white shadow rounded-lg p-6">
+              <h2 className="text-lg font-medium text-gray-900 mb-4">Información del Administrador</h2>
+              
               {request.admin_data ? (
-                <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Nombre Completo</label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {request.admin_data.first_name} {request.admin_data.last_name}
-                    </p>
+                    <label className="block text-sm font-medium text-gray-700">Nombre</label>
+                    <p className="mt-1 text-sm text-gray-900">{request.admin_data.first_name}</p>
                   </div>
                   <div>
+                    <label className="block text-sm font-medium text-gray-700">Apellido</label>
+                    <p className="mt-1 text-sm text-gray-900">{request.admin_data.last_name}</p>
+                  </div>
+                  <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700">Email</label>
                     <p className="mt-1 text-sm text-gray-900">{request.admin_data.email}</p>
                   </div>
-                </>
-              ) : (
-                <p className="text-gray-500">No se han enviado datos del administrador</p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Request Timeline */}
-        <div className="mt-8 bg-white shadow rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Información de la Solicitud</h3>
-          </div>
-          <div className="p-6 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email de invitación</label>
-                <p className="mt-1 text-sm text-gray-900">{request.email}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Creado por</label>
-                <p className="mt-1 text-sm text-gray-900">
-                  {request.created_by ? `${request.created_by.first_name} ${request.created_by.last_name} (${request.created_by.email})` : 'Usuario desconocido'}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Fecha de invitación</label>
-                <p className="mt-1 text-sm text-gray-900">
-                  {new Date(request.created_at).toLocaleString()}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Fecha de expiración</label>
-                <p className="mt-1 text-sm text-gray-900">
-                  {new Date(request.expires_at).toLocaleString()}
-                </p>
-              </div>
-              {request.accepted_at && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Fecha de envío</label>
-                  <p className="mt-1 text-sm text-gray-900">
-                    {new Date(request.accepted_at).toLocaleString()}
-                  </p>
                 </div>
+              ) : (
+                <p className="text-gray-500">No hay datos del administrador disponibles</p>
               )}
             </div>
 
+            {/* Corrections Notes */}
             {request.corrections_notes && (
-              <div className="mt-6 p-4 bg-orange-50 border border-orange-200 rounded-md">
-                <label className="block text-sm font-medium text-orange-800 mb-2">
-                  Correcciones solicitadas:
-                </label>
-                <p className="text-sm text-orange-900">{request.corrections_notes}</p>
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
+                <h2 className="text-lg font-medium text-orange-900 mb-4">Correcciones Solicitadas</h2>
+                <p className="text-sm text-orange-800">{request.corrections_notes}</p>
               </div>
             )}
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Actions */}
+            {request.status.name === 'pending' && (
+              <div className="bg-white shadow rounded-lg p-6">
+                <h2 className="text-lg font-medium text-gray-900 mb-4">Acciones</h2>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => openActionModal('approve')}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition duration-200"
+                  >
+                    Aprobar Solicitud
+                  </button>
+                  <button
+                    onClick={() => openActionModal('request_corrections')}
+                    className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-md transition duration-200"
+                  >
+                    Solicitar Correcciones
+                  </button>
+                  <button
+                    onClick={() => openActionModal('reject')}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition duration-200"
+                  >
+                    Rechazar Solicitud
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Request Details */}
+            <div className="bg-white shadow rounded-lg p-6">
+              <h2 className="text-lg font-medium text-gray-900 mb-4">Detalles de la Solicitud</h2>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Estado</label>
+                  <div className="mt-1">
+                    {getStatusBadge(request.status.name)}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Fecha de Creación</label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {new Date(request.created_at).toLocaleDateString('es-ES', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+                {request.created_by && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Invitado por</label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {request.created_by.first_name} {request.created_by.last_name}
+                    </p>
+                    <p className="text-xs text-gray-500">{request.created_by.email}</p>
+                  </div>
+                )}
+                {request.updated_by && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Última actualización por</label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {request.updated_by.first_name} {request.updated_by.last_name}
+                    </p>
+                    <p className="text-xs text-gray-500">{request.updated_by.email}</p>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Expira el</label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {new Date(request.expires_at).toLocaleDateString('es-ES', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -383,42 +379,40 @@ export default function OrganizationRequestDetailPage() {
                  'Solicitar Correcciones'}
               </h3>
               
-              <div className="space-y-4">
-                {actionType === 'request_corrections' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Correcciones requeridas *
-                    </label>
-                    <textarea
-                      value={correctionsNotes}
-                      onChange={(e) => setCorrectionsNotes(e.target.value)}
-                      required
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Especifique las correcciones necesarias..."
-                    />
-                  </div>
-                )}
-
-                <div>
+              {actionType === 'request_corrections' && (
+                <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Mensaje adicional (opcional)
+                    Notas de Corrección (Requerido)
                   </label>
                   <textarea
-                    value={actionMessage}
-                    onChange={(e) => setActionMessage(e.target.value)}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Mensaje adicional para incluir en el email..."
+                    value={correctionsNotes}
+                    onChange={(e) => setCorrectionsNotes(e.target.value)}
+                    rows={4}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Describe las correcciones necesarias..."
+                    required
                   />
                 </div>
+              )}
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Mensaje adicional (Opcional)
+                </label>
+                <textarea
+                  value={actionMessage}
+                  onChange={(e) => setActionMessage(e.target.value)}
+                  rows={3}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Mensaje adicional para el usuario..."
+                />
               </div>
-
-              <div className="flex justify-end space-x-3 pt-6">
+              
+              <div className="flex justify-end space-x-3">
                 <button
-                  type="button"
                   onClick={() => setShowActionModal(false)}
-                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-md transition duration-200"
+                  disabled={actionLoading}
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-700 font-medium py-2 px-4 rounded-md transition duration-200 disabled:opacity-50"
                 >
                   Cancelar
                 </button>
