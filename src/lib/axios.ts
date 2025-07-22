@@ -22,13 +22,36 @@ const getCsrfToken = async () => {
   }
 };
 
-// Interceptor para obtener CSRF token antes de peticiones protegidas
+// Función para obtener el token del storage
+const getAuthToken = () => {
+  if (typeof window === 'undefined') return null;
+  
+  try {
+    const authData = localStorage.getItem('auth-storage');
+    if (authData) {
+      const parsed = JSON.parse(authData);
+      return parsed.state?.token || null;
+    }
+  } catch (error) {
+    console.error('Error obteniendo token del storage:', error);
+  }
+  return null;
+};
+
+// Interceptor para obtener CSRF token y añadir Bearer token
 axiosClient.interceptors.request.use(
   async (config) => {
     // Para métodos que modifican datos, obtener CSRF token primero
     if (['post', 'put', 'patch', 'delete'].includes(config.method?.toLowerCase() || '')) {
       await getCsrfToken();
     }
+    
+    // AÑADIDO: Agregar token de autenticación si está disponible
+    const token = getAuthToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    
     return config;
   },
   (error) => Promise.reject(error)
@@ -42,6 +65,9 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 401) {
       // Limpiar estado de autenticación
       if (typeof window !== 'undefined') {
+        // Limpiar localStorage
+        localStorage.removeItem('auth-storage');
+        
         // Solo en el cliente
         import('@/store/authStore').then(({ useAuthStore }) => {
           useAuthStore.getState().reset();

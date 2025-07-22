@@ -4,7 +4,7 @@ import axiosClient from '@/lib/axios';
 import { useAuthStore } from '@/store/authStore';
 
 export function useAuth() {
-  const { user, loading, error, hydrated, setUser, setLoading, setError, clearError, reset } = useAuthStore();
+  const { user, token, loading, error, hydrated, setUser, setToken, setLoading, setError, clearError, reset } = useAuthStore();
 
   const checkAuth = useCallback(async (force = false) => {
     // No hacer nada si no se ha hidratado aún
@@ -44,7 +44,11 @@ export function useAuth() {
     
     try {
       const response = await axiosClient.post('/login', { email, password });
+      
+      // MODIFICADO: Guardar tanto el usuario como el token
       setUser(response.data.user);
+      setToken(response.data.token);
+      
     } catch (error) {
       const errorMessage = error instanceof AxiosError
         ? error.response?.data?.message || 'Login failed'
@@ -54,7 +58,7 @@ export function useAuth() {
     } finally {
       setLoading(false);
     }
-  }, [setUser, setLoading, setError]);
+  }, [setUser, setToken, setLoading, setError]);
 
   const logout = useCallback(async () => {
     setLoading(true);
@@ -73,6 +77,7 @@ export function useAuth() {
   return {
     // Estado
     user,
+    token,  // AÑADIDO: Exportar el token
     loading: loading || !hydrated, // Considerar loading si no está hidratado
     error,
     hydrated,
