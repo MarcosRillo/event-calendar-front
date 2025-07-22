@@ -15,15 +15,23 @@ interface OrganizationRequest {
   accepted_at?: string;
   created_at: string;
   updated_at: string;
-  status: {
-    id: number;
-    name: string;
-  };
-  created_by: {
+  created_by?: {
     id: number;
     first_name: string;
     last_name: string;
     email: string;
+  };
+  updated_by?: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+  organization_id?: number; // AÑADIDO: También puede existir
+  rejected_reason?: string; // AÑADIDO: También puede existir
+  status: {
+    id: number;
+    name: string;
   };
   organization_data?: {
     name: string;
@@ -93,7 +101,6 @@ export default function OrganizationRequestDetailPage() {
       
       if (response.data.success) {
         setShowActionModal(false);
-        await fetchRequest(); // Refresh data
         
         // Show success message
         alert(`Solicitud ${
@@ -101,6 +108,11 @@ export default function OrganizationRequestDetailPage() {
           actionType === 'reject' ? 'rechazada' : 
           'enviada para correcciones'
         } exitosamente`);
+        
+        // Redirect to organization requests list
+        router.push('/super-admin/organization-requests');
+      } else {
+        alert('Error: La operación no fue exitosa');
       }
     } catch (error) {
       console.error('Error processing action:', error);
@@ -323,7 +335,7 @@ export default function OrganizationRequestDetailPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700">Creado por</label>
                 <p className="mt-1 text-sm text-gray-900">
-                  {request.created_by.first_name} {request.created_by.last_name} ({request.created_by.email})
+                  {request.created_by ? `${request.created_by.first_name} ${request.created_by.last_name} (${request.created_by.email})` : 'Usuario desconocido'}
                 </p>
               </div>
               <div>
