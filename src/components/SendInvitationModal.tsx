@@ -12,6 +12,8 @@ interface SendInvitationModalProps {
 export default function SendInvitationModal({ isOpen, onClose, onSuccess }: SendInvitationModalProps) {
   const [formData, setFormData] = useState({
     email: '',
+    organization_name: '',
+    contact_name: '',
     expires_days: 30,
     message: ''
   });
@@ -30,6 +32,8 @@ export default function SendInvitationModal({ isOpen, onClose, onSuccess }: Send
         // Reset form
         setFormData({
           email: '',
+          organization_name: '',
+          contact_name: '',
           expires_days: 30,
           message: ''
         });
@@ -78,6 +82,34 @@ export default function SendInvitationModal({ isOpen, onClose, onSuccess }: Send
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="ejemplo@email.com"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nombre de la organización *
+              </label>
+              <input
+                type="text"
+                value={formData.organization_name}
+                onChange={(e) => handleChange('organization_name', e.target.value)}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Nombre de la organización"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nombre del contacto *
+              </label>
+              <input
+                type="text"
+                value={formData.contact_name}
+                onChange={(e) => handleChange('contact_name', e.target.value)}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Nombre completo del contacto"
               />
             </div>
 
