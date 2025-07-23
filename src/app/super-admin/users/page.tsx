@@ -1,42 +1,95 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import axiosClient from '@/lib/axios';
-import { AxiosError } from 'axios';
+import { useEffect, useState } from 'react';
 import NavBar from '@/components/NavBar';
-import { User, PaginatedUsers } from '@/types';
+import EditUserModal from '@/components/EditUserModal';
+import DeleteUserModal from '@/components/DeleteUserModal';
+import { User } from '@/types';
+import { useUserManagement } from '@/hooks/useUserManagement';
 
 export default function UsersManagement() {
-  const [usersData, setUsersData] = useState<PaginatedUsers | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    usersData,
+    loading,
+    error,
+    roles,
+    organizations,
+    fetchUsers,
+    fetchRoles,
+    fetchOrganizations,
+    toggleUserStatus,
+    deleteUser,
+    refreshUser,
+  } = useUserManagement();
+
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [actionLoading, setActionLoading] = useState<{ [key: number]: boolean }>({});
 
-  const fetchUsers = useCallback(async (): Promise<void> => {
-    try {
-      setLoading(true);
-      const response = await axiosClient.get(`/super-admin/users?page=${currentPage}`);
-      
-      if (response.data.success) {
-        setUsersData(response.data.data);
-      } else {
-        setError(response.data.message || 'Failed to load users');
-      }
-    } catch (error) {
-      const errorMessage = error instanceof AxiosError
-        ? error.response?.data?.message || 'Error fetching users'
-        : 'Error fetching users';
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage]);
-
+  // Fetch initial data
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    fetchUsers(currentPage, searchTerm);
+    fetchRoles();
+    fetchOrganizations();
+  }, [fetchUsers, fetchRoles, fetchOrganizations, currentPage, searchTerm]);
 
-  if (loading) {
+  const handleEditUser = (user: User) => {
+    setSelectedUser(user);
+    setEditModalOpen(true);
+  };
+
+  const handleDeleteUser = (user: User) => {
+    setSelectedUser(user);
+    setDeleteModalOpen(true);
+  };
+
+  const handleToggleStatus = async (user: User) => {
+    setActionLoading(prev => ({ ...prev, [user.id]: true }));
+    try {
+      await toggleUserStatus(user.id);
+    } catch (error) {
+      console.error('Error toggling user status:', error);
+      // Could add toast notification here
+    } finally {
+      setActionLoading(prev => ({ ...prev, [user.id]: false }));
+    }
+  };
+
+  const handleConfirmDelete = async (userId: number) => {
+    setActionLoading(prev => ({ ...prev, [userId]: true }));
+    try {
+      const userToDelete = usersData?.data.find(u => u.id === userId);
+      await deleteUser(userId, userToDelete?.role.name);
+      setDeleteModalOpen(false);
+      setSelectedUser(null);
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      // Could add toast notification here
+    } finally {
+      setActionLoading(prev => ({ ...prev, [userId]: false }));
+    }
+  };
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  const getRoleColor = (roleName: string) => {
+    switch (roleName) {
+      case 'superadmin':
+        return 'bg-red-100 text-red-800';
+      case 'admin':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-green-100 text-green-800';
+    }
+  };
+
+  if (loading && !usersData) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
@@ -44,17 +97,17 @@ export default function UsersManagement() {
     );
   }
 
-  if (error) {
+  if (error && !usersData) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md w-full">
           <h3 className="text-lg font-medium text-red-800 mb-2">Error</h3>
           <p className="text-red-600">{error}</p>
           <button
-            onClick={() => fetchUsers()}
+            onClick={() => fetchUsers(currentPage, searchTerm)}
             className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
           >
-            Retry
+            Reintentar
           </button>
         </div>
       </div>
@@ -64,13 +117,14 @@ export default function UsersManagement() {
   return (
     <div className="min-h-screen bg-gray-50">
       <NavBar />
+      
       {/* Header */}
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-6 flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Users Management</h1>
-              <p className="text-gray-600">Manage system users and their roles</p>
+              <h1 className="text-2xl font-bold text-gray-900">Gestión de Usuarios</h1>
+              <p className="text-gray-600">Administra usuarios del sistema y sus roles</p>
             </div>
           </div>
         </div>
@@ -79,16 +133,33 @@ export default function UsersManagement() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Card */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Users Statistics</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Estadísticas de Usuarios</h3>
           <p className="text-3xl font-bold text-blue-600">
-            {usersData?.total || 0} Total Users
+            {usersData?.total || 0} Usuarios Totales
           </p>
+        </div>
+
+        {/* Search Bar */}
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <div className="max-w-md">
+            <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
+              Buscar usuarios
+            </label>
+            <input
+              type="text"
+              id="search"
+              value={searchTerm}
+              onChange={handleSearch}
+              placeholder="Buscar por nombre o email..."
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            />
+          </div>
         </div>
 
         {/* Users Table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">All Users</h3>
+            <h3 className="text-lg font-medium text-gray-900">Todos los Usuarios</h3>
           </div>
           
           <div className="overflow-x-auto">
@@ -96,19 +167,22 @@ export default function UsersManagement() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    User
+                    Usuario
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Role
+                    Rol
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Organization
+                    Organización
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Created
+                    Estado
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
+                    Creado
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Acciones
                   </th>
                 </tr>
               </thead>
@@ -121,33 +195,68 @@ export default function UsersManagement() {
                           {user.first_name} {user.last_name}
                         </div>
                         <div className="text-sm text-gray-500">{user.email}</div>
+                        {user.phone && (
+                          <div className="text-sm text-gray-500">{user.phone}</div>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        user.role.name === 'superadmin' 
-                          ? 'bg-red-100 text-red-800'
-                          : user.role.name === 'organization_admin'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-green-100 text-green-800'
-                      }`}>
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.role.name)}`}>
                         {user.role.name}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{user.organization.name}</div>
-                      <div className="text-sm text-gray-500">{user.organization.slug}</div>
+                      {user.organization ? (
+                        <div>
+                          <div className="text-sm text-gray-900">{user.organization.name}</div>
+                          <div className="text-sm text-gray-500">{user.organization.slug}</div>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-500">Sin organización</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {user.is_active ? 'Activo' : 'Inactivo'}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(user.created_at).toLocaleDateString()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button className="text-indigo-600 hover:text-indigo-900 mr-4">
-                        Edit
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                      <button
+                        onClick={() => handleEditUser(user)}
+                        className="text-indigo-600 hover:text-indigo-900"
+                      >
+                        Editar
                       </button>
-                      <button className="text-red-600 hover:text-red-900">
-                        Delete
+                      <button
+                        onClick={() => handleToggleStatus(user)}
+                        disabled={actionLoading[user.id]}
+                        className={`${
+                          user.is_active 
+                            ? 'text-yellow-600 hover:text-yellow-900' 
+                            : 'text-green-600 hover:text-green-900'
+                        } disabled:opacity-50`}
+                      >
+                        {actionLoading[user.id] 
+                          ? 'Cargando...' 
+                          : user.is_active 
+                            ? 'Desactivar' 
+                            : 'Activar'
+                        }
                       </button>
+                      {/* Solo mostrar eliminar si NO es administrador */}
+                      {!['admin', 'superadmin'].includes(user.role.name) && (
+                        <button
+                          onClick={() => handleDeleteUser(user)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          Eliminar
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -155,32 +264,66 @@ export default function UsersManagement() {
             </table>
           </div>
 
+          {/* Empty State */}
+          {usersData?.data.length === 0 && (
+            <div className="px-6 py-12 text-center">
+              <p className="text-gray-500">
+                {searchTerm ? 'No se encontraron usuarios que coincidan con la búsqueda.' : 'No hay usuarios registrados.'}
+              </p>
+            </div>
+          )}
+
           {/* Pagination */}
           {usersData && usersData.last_page > 1 && (
             <div className="px-6 py-4 border-t border-gray-200 flex justify-between items-center">
               <div className="text-sm text-gray-500">
-                Page {usersData.current_page} of {usersData.last_page}
+                Página {usersData.current_page} de {usersData.last_page} 
+                ({usersData.total} usuarios totales)
               </div>
               <div className="flex space-x-2">
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={usersData.current_page === 1}
-                  className="px-3 py-1 bg-gray-200 text-gray-700 rounded disabled:opacity-50"
+                  disabled={usersData.current_page === 1 || loading}
+                  className="px-3 py-1 bg-gray-200 text-gray-700 rounded disabled:opacity-50 hover:bg-gray-300"
                 >
-                  Previous
+                  Anterior
                 </button>
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, usersData.last_page))}
-                  disabled={usersData.current_page === usersData.last_page}
-                  className="px-3 py-1 bg-gray-200 text-gray-700 rounded disabled:opacity-50"
+                  disabled={usersData.current_page === usersData.last_page || loading}
+                  className="px-3 py-1 bg-gray-200 text-gray-700 rounded disabled:opacity-50 hover:bg-gray-300"
                 >
-                  Next
+                  Siguiente
                 </button>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Modals */}
+      <EditUserModal
+        isOpen={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false);
+          setSelectedUser(null);
+        }}
+        user={selectedUser}
+        roles={roles}
+        organizations={organizations}
+        onUserUpdated={refreshUser}
+      />
+
+      <DeleteUserModal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setSelectedUser(null);
+        }}
+        user={selectedUser}
+        onConfirm={handleConfirmDelete}
+        loading={selectedUser ? actionLoading[selectedUser.id] : false}
+      />
     </div>
   );
 }

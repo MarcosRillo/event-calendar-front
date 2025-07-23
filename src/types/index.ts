@@ -5,13 +5,35 @@ export interface Role {
   name: string;
 }
 
+export interface TrustLevel {
+  id: number;
+  name: string;
+}
+
 export interface Organization {
   id: number;
   name: string;
   slug: string;
+  website_url?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  admin_id?: number;
+  parent_id?: number;
+  trust_level_id?: number;
+  is_active: boolean;
+  created_by?: number;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string;
   users_count?: number;  // Optional for admin views
   events_count?: number; // Optional for admin views
-  created_at?: string;   // Optional for admin views
+  // Relations
+  admin?: User;
+  trustLevel?: TrustLevel;
+  createdBy?: User;
+  users?: User[];
+  events?: Event[];
 }
 
 // User type for authentication (simpler structure)
@@ -30,9 +52,29 @@ export interface User {
   first_name: string;
   last_name: string;
   email: string;
+  phone?: string;
+  avatar_url?: string;
+  is_active: boolean;
   role: Role;
-  organization: Organization;
+  organization?: Organization;
+  organization_id?: number;
+  role_id: number;
   created_at: string;
+  updated_at?: string;
+  created_by?: User;
+}
+
+// Form interfaces for user management
+export interface UpdateUserFormData {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string;
+  role_id: number;
+  organization_id?: number;
+  is_active: boolean;
+  password?: string;
+  password_confirmation?: string;
 }
 
 // Pagination wrapper for API responses
@@ -110,4 +152,66 @@ export interface DashboardResponse<TStats = DashboardStats> {
     stats: TStats;
   };
   message?: string;
+}
+
+// Organization management types
+export interface UpdateOrganizationData {
+  name?: string;
+  slug?: string;
+  website_url?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  admin_id?: number;
+  trust_level_id?: number;
+  is_active?: boolean;
+}
+
+export interface OrganizationFilters {
+  search?: string;
+  status?: 'active' | 'inactive' | 'deleted' | 'all';
+  sort_by?: 'name' | 'created_at' | 'updated_at' | 'is_active';
+  sort_direction?: 'asc' | 'desc';
+  per_page?: number;
+  page?: number;
+}
+
+export interface OrganizationActionConfirmation {
+  id: number;
+  action: 'delete' | 'restore' | 'force-delete' | 'toggle-status';
+  title: string;
+  message: string;
+  confirmText: string;
+  cancelText: string;
+  destructive?: boolean;
+}
+
+// API Response types
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  message: string;
+  data?: T;
+  error?: string;
+}
+
+export interface PaginatedApiResponse<T> extends ApiResponse<T[]> {
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number;
+    to: number;
+  };
+}
+
+export interface ValidationError {
+  [field: string]: string[];
+}
+
+export interface ApiErrorResponse {
+  success: false;
+  message: string;
+  error?: string;
+  errors?: ValidationError;
 }
