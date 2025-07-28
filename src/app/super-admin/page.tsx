@@ -2,9 +2,29 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { 
+  Typography, 
+  Card, 
+  CardContent, 
+  List, 
+  ListItem, 
+  ListItemText, 
+  Button,
+  Box,
+  Chip,
+} from '@mui/material';
+import {
+  People,
+  Business,
+  Event,
+  Assignment,
+} from '@mui/icons-material';
 import axiosClient from '@/lib/axios';
 import { AxiosError } from 'axios';
-import NavBar from '@/components/NavBar';
+import DashboardLayout from '@/components/layout/DashboardLayout';
+import StatsCard from '@/components/ui/StatsCard';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import ErrorDisplay from '@/components/ui/ErrorDisplay';
 import type { SuperAdminDashboardData, DashboardResponse } from '@/types';
 
 export default function SuperAdminDashboard() {
@@ -40,143 +60,194 @@ export default function SuperAdminDashboard() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <LoadingSpinner fullScreen message="Cargando dashboard..." />;
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md w-full">
-          <h3 className="text-lg font-medium text-red-800 mb-2">Error</h3>
-          <p className="text-red-600">{error}</p>
-          <button
-            onClick={() => fetchDashboardData()}
-            className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
+      <ErrorDisplay
+        title="Error al cargar el dashboard"
+        message={error}
+        onRetry={fetchDashboardData}
+      />
     );
   }
 
   if (!dashboardData) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-600">No data available</div>
-      </div>
+      <ErrorDisplay
+        title="Sin datos"
+        message="No hay datos disponibles para mostrar"
+        severity="warning"
+        onRetry={fetchDashboardData}
+      />
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <NavBar />
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <h1 className="text-2xl font-bold text-gray-900">Super Admin Dashboard</h1>
-            <p className="text-gray-600">Welcome, {dashboardData.user.name}</p>
-          </div>
-        </div>
-      </div>
+    <DashboardLayout>
+      {/* Page Header */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Dashboard Super Admin
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Bienvenido, {dashboardData.user.name}
+        </Typography>
+      </Box>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Total Users</h3>
-            <p className="text-3xl font-bold text-blue-600">{dashboardData.stats.total_users}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Organizations</h3>
-            <p className="text-3xl font-bold text-green-600">{dashboardData.stats.total_organizations}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Total Events</h3>
-            <p className="text-3xl font-bold text-purple-600">{dashboardData.stats.total_events}</p>
-          </div>
-        </div>
+      {/* Stats Cards */}
+      <Box 
+        sx={{ 
+          display: 'grid', 
+          gridTemplateColumns: { 
+            xs: '1fr', 
+            sm: 'repeat(2, 1fr)', 
+            md: 'repeat(3, 1fr)' 
+          }, 
+          gap: 3, 
+          mb: 4 
+        }}
+      >
+        <StatsCard
+          title="Total de Usuarios"
+          value={dashboardData.stats.total_users}
+          icon={<People />}
+          color="primary"
+          trend={{
+            value: 12,
+            isPositive: true,
+          }}
+        />
+        <StatsCard
+          title="Organizaciones"
+          value={dashboardData.stats.total_organizations}
+          icon={<Business />}
+          color="success"
+          trend={{
+            value: 8,
+            isPositive: true,
+          }}
+        />
+        <StatsCard
+          title="Total de Eventos"
+          value={dashboardData.stats.total_events}
+          icon={<Event />}
+          color="secondary"
+          trend={{
+            value: 5,
+            isPositive: false,
+          }}
+        />
+      </Box>
 
-        {/* Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Recent Users */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Recent Users</h3>
-            </div>
-            <div className="p-6">
-              <div className="space-y-4">
-                {dashboardData.stats.recent_users.map((user) => (
-                  <div key={user.id} className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-gray-900">{user.name}</p>
-                      <p className="text-sm text-gray-500">{user.email}</p>
-                      <p className="text-xs text-gray-400">{user.role}</p>
-                    </div>
-                    <div className="text-sm text-gray-500">
+      {/* Recent Activity */}
+      <Box 
+        sx={{ 
+          display: 'grid', 
+          gridTemplateColumns: { 
+            xs: '1fr', 
+            lg: 'repeat(2, 1fr)' 
+          }, 
+          gap: 3, 
+          mb: 4 
+        }}
+      >
+        {/* Recent Users */}
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Usuarios Recientes
+            </Typography>
+            <List>
+              {dashboardData.stats.recent_users.map((user) => (
+                <ListItem key={user.id} divider>
+                  <ListItemText
+                    primary={user.name}
+                    secondary={user.email}
+                  />
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
+                    <Chip
+                      label={user.role}
+                      size="small"
+                      variant="outlined"
+                      color="primary"
+                    />
+                    <Typography variant="caption" color="text.secondary">
                       {new Date(user.created_at).toLocaleDateString()}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+                    </Typography>
+                  </Box>
+                </ListItem>
+              ))}
+            </List>
+          </CardContent>
+        </Card>
 
-          {/* Recent Organizations */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Recent Organizations</h3>
-            </div>
-            <div className="p-6">
-              <div className="space-y-4">
-                {dashboardData.stats.recent_organizations.map((org) => (
-                  <div key={org.id} className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-gray-900">{org.name}</p>
-                      <p className="text-sm text-gray-500">{org.slug}</p>
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {new Date(org.created_at).toLocaleDateString()}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Recent Organizations */}
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Organizaciones Recientes
+            </Typography>
+            <List>
+              {dashboardData.stats.recent_organizations.map((org) => (
+                <ListItem key={org.id} divider>
+                  <ListItemText
+                    primary={org.name}
+                    secondary={org.slug}
+                  />
+                  <Typography variant="caption" color="text.secondary">
+                    {new Date(org.created_at).toLocaleDateString()}
+                  </Typography>
+                </ListItem>
+              ))}
+            </List>
+          </CardContent>
+        </Card>
+      </Box>
 
-        {/* Action Buttons */}
-        <div className="mt-8 flex flex-wrap gap-4">
-          <button
-            onClick={() => router.push('/super-admin/organization-requests')}
-            className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700"
-          >
-            Organization Requests
-          </button>
-          <button
-            onClick={() => router.push('/super-admin/users')}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            Manage Users
-          </button>
-          <button
-            onClick={() => router.push('/super-admin/organizations')}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-          >
-            Manage Organizations
-          </button>
-          <button
-            onClick={() => router.push('/super-admin/events')}
-            className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
-          >
-            Manage Events
-          </button>
-        </div>
-      </div>
-    </div>
+      {/* Action Buttons */}
+      <Card>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            Acciones Rápidas
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+            <Button
+              variant="contained"
+              color="secondary"
+              startIcon={<Assignment />}
+              onClick={() => router.push('/super-admin/organization-requests')}
+            >
+              Solicitudes de Organizaciones
+            </Button>
+            <Button
+              variant="outlined"
+              color="primary"
+              startIcon={<People />}
+              onClick={() => router.push('/super-admin/users')}
+            >
+              Gestionar Usuarios
+            </Button>
+            <Button
+              variant="outlined"
+              color="success"
+              startIcon={<Business />}
+              onClick={() => router.push('/super-admin/organizations')}
+            >
+              Gestionar Organizaciones
+            </Button>
+            <Button
+              variant="outlined"
+              color="secondary"
+              startIcon={<Event />}
+              onClick={() => router.push('/super-admin/events')}
+            >
+              Gestionar Eventos
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
+    </DashboardLayout>
   );
 }
