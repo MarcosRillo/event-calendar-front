@@ -131,7 +131,7 @@ const theme = createTheme({
   },
   spacing: 8, // Base unit 8px
   shape: {
-    borderRadius: 8, // Bordes redondeados estándar
+    borderRadius: 0, // Sin bordes redondeados
   },
   components: {
     // AppBar personalizado
@@ -154,7 +154,7 @@ const theme = createTheme({
             color: '#94A3B8',          // Iconos gris claro
           },
           '& .MuiListItemButton-root': {
-            borderRadius: '8px',
+            borderRadius: '0px',
             margin: '2px 8px',
             '&:hover': {
               backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -177,7 +177,7 @@ const theme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 8,
+          borderRadius: 0,
           textTransform: 'none',
           fontWeight: 500,
           padding: '8px 24px',
@@ -194,7 +194,7 @@ const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 12,
+          borderRadius: 0,
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
           '&:hover': {
             boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
@@ -206,7 +206,7 @@ const theme = createTheme({
     MuiPaper: {
       styleOverrides: {
         root: {
-          borderRadius: 8,
+          borderRadius: 0,
         },
       },
     },
@@ -215,7 +215,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           '& .MuiOutlinedInput-root': {
-            borderRadius: 8,
+            borderRadius: 0,
           },
         },
       },
@@ -224,7 +224,7 @@ const theme = createTheme({
     MuiChip: {
       styleOverrides: {
         root: {
-          borderRadius: 16,
+          borderRadius: 0,
           fontWeight: 500,
         },
       },

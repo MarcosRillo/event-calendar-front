@@ -177,7 +177,7 @@ export default function SidebarNav({ onMobileClose }: SidebarNavProps) {
                       selected={active}
                       disabled={item.disabled}
                       sx={{
-                        borderRadius: 2,
+                        borderRadius: 0,
                         mx: 1,
                         mb: 0.5,
                         '&.Mui-selected': {

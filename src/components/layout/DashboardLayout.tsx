@@ -102,7 +102,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   color: 'error.contrastText',
                   px: 1,
                   py: 0.5,
-                  borderRadius: 1,
+                  borderRadius: 0,
                   fontSize: '0.75rem',
                   fontWeight: 500,
                 }}
