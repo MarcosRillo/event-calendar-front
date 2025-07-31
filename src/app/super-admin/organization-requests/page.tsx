@@ -1,338 +1,405 @@
 "use client";
+import { useState, useEffect } from "react";
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Button,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
+  Tooltip,
+  IconButton,
+  Skeleton,
+} from "@mui/material";
+import {
+  Add as AddIcon,
+  Visibility as VisibilityIcon,
+  FilterList as FilterListIcon,
+} from "@mui/icons-material";
+import DashboardLayout from "@/components/layout/DashboardLayout";
+import DataTable, { DataTableColumn } from "@/components/ui/DataTable";
+import NotificationSnackbar, { useNotifications } from "@/components/ui/NotificationSnackbar";
+import SendInvitationModal from "@/components/SendInvitationModal";
+import { useRouter } from "next/navigation";
+import { useOrganizationRequests, OrganizationRequest } from "@/hooks/useOrganizationRequests";
 
-import { useEffect, useState, useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import axiosClient from '@/lib/axios';
-import NavBar from '@/components/NavBar';
-import SendInvitationModal from '@/components/SendInvitationModal';
+const STATUS_OPTIONS = [
+  { value: "all", label: "Todas" },
+  { value: "pending", label: "Pendientes" },
+  { value: "approved", label: "Aprobadas" },
+  { value: "rejected", label: "Rechazadas" },
+  { value: "corrections_needed", label: "Necesitan Correcciones" },
+];
 
-interface OrganizationRequest {
-  id: number;
-  email: string;
-  token: string;
-  status_id: number;
-  corrections_notes?: string;
-  expires_at: string;
-  accepted_at?: string;
-  created_at: string;
-  updated_at: string;
-  created_by?: {
-    id: number;
-    first_name: string;
-    last_name: string;
-    email: string;
-  };
-  updated_by?: {
-    id: number;
-    first_name: string;
-    last_name: string;
-    email: string;
-  };
-  organization_id?: number;
-  rejected_reason?: string;
-  status: {
-    id: number;
-    name: string;
-  };
-  organization_data?: {
-    name: string;
-    slug: string;
-    website_url?: string;
-    address: string;
-    phone: string;
-    email: string;
-  };
-  admin_data?: {
-    first_name: string;
-    last_name: string;
-    email: string;
-  };
-}
-
-interface RequestsResponse {
-  success: boolean;
-  message?: string;
-  data: OrganizationRequest[];
-  meta: {
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-    from: number | null;
-    to: number | null;
-  };
+function getStatusColor(status: string) {
+  switch (status) {
+    case "approved":
+      return "success";
+    case "pending":
+      return "warning";
+    case "rejected":
+      return "error";
+    case "corrections_needed":
+      return "info";
+    default:
+      return "default";
+  }
 }
 
 export default function OrganizationRequestsPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [requests, setRequests] = useState<OrganizationRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [filter, setFilter] = useState('all');
+  const {
+    requestsData,
+    loading,
+    error,
+    fetchRequests,
+    clearError,
+  } = useOrganizationRequests();
+  const {
+    notification,
+    open: notificationOpen,
+    closeNotification,
+  } = useNotifications();
+
+  const [filters, setFilters] = useState({ search: "", status: "all" });
+  const [currentPage, setCurrentPage] = useState(0); // DataTable usa 0-based
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
 
-  const fetchRequests = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (filter !== 'all') {
-        params.append('status', filter);
-      }
-      params.append('page', currentPage.toString());
-
-      const response = await axiosClient.get<RequestsResponse>(`/super-admin/organization-requests?${params}`);
-      
-      if (response.data.success && response.data.data && Array.isArray(response.data.data)) {
-        setRequests(response.data.data);
-        setCurrentPage(response.data.meta.current_page);
-        setTotalPages(response.data.meta.last_page);
-      } else {
-        console.error('Invalid response structure:', response.data);
-        setRequests([]);
-        setError('Estructura de respuesta inválida');
-      }
-    } catch (error) {
-      console.error('Error fetching requests:', error);
-      setError('Error al cargar las solicitudes');
-    } finally {
-      setLoading(false);
-    }
-  }, [filter, currentPage]);
-
+  // Fetch data on mount and when filters/page change
   useEffect(() => {
-    fetchRequests();
-  }, [fetchRequests]);
+    fetchRequests(currentPage + 1, filters);
+  }, [fetchRequests, currentPage, filters]);
 
-  // Refresh when returning from detail page with refresh parameter
-  useEffect(() => {
-    const refreshParam = searchParams.get('refresh');
-    if (refreshParam) {
-      // Clean URL and refresh data
-      const url = new URL(window.location.href);
-      url.searchParams.delete('refresh');
-      window.history.replaceState({}, '', url.toString());
-      fetchRequests();
-    }
-  }, [searchParams, fetchRequests]);
+  // Métricas robustas ante datos indefinidos
+  const total = requestsData?.meta?.total ?? 0;
+  const pending = Array.isArray(requestsData?.data)
+    ? requestsData.data.filter(r => r.status?.name === "pending").length
+    : 0;
+  const approved = Array.isArray(requestsData?.data)
+    ? requestsData.data.filter(r => r.status?.name === "approved").length
+    : 0;
+  const rejected = Array.isArray(requestsData?.data)
+    ? requestsData.data.filter(r => r.status?.name === "rejected").length
+    : 0;
+  const corrections = Array.isArray(requestsData?.data)
+    ? requestsData.data.filter(r => r.status?.name === "corrections_needed").length
+    : 0;
 
-  const getStatusBadge = (status: string) => {
-    const styles = {
-      sent: 'bg-blue-100 text-blue-800',
-      pending: 'bg-yellow-100 text-yellow-800',
-      approved: 'bg-green-100 text-green-800',
-      rejected: 'bg-red-100 text-red-800',
-      corrections_needed: 'bg-orange-100 text-orange-800'
-    };
+  // DataTable columns
+  const columns: DataTableColumn[] = [
+    {
+      field: "organization_data",
+      headerName: "Organización",
+      flex: 1,
+      minWidth: 200,
+      renderCell: (params) => {
+        const org = (params.row as OrganizationRequest).organization_data;
+        return (
+          <Box>
+            <Typography variant="body2" fontWeight={600}>
+              {org?.name || "Sin datos"}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {org?.email}
+            </Typography>
+          </Box>
+        );
+      },
+    },
+    {
+      field: "admin_data",
+      headerName: "Admin",
+      flex: 1,
+      minWidth: 180,
+      renderCell: (params) => {
+        const admin = (params.row as OrganizationRequest).admin_data;
+        return (
+          <Box>
+            <Typography variant="body2">
+              {admin?.first_name} {admin?.last_name}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {admin?.email}
+            </Typography>
+          </Box>
+        );
+      },
+    },
+    {
+      field: "status",
+      headerName: "Estado",
+      width: 130,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (params) => {
+        const status = (params.row as OrganizationRequest).status.name;
+        return (
+          <Chip
+            label={STATUS_OPTIONS.find(opt => opt.value === status)?.label || status}
+            color={getStatusColor(status)}
+            size="small"
+            variant="filled"
+          />
+        );
+      },
+    },
+    {
+      field: "created_at",
+      headerName: "Fecha de Solicitud",
+      width: 150,
+      renderCell: (params) => (
+        <Typography variant="body2">
+          {params.value ? new Date(params.value as string).toLocaleDateString() : "-"}
+        </Typography>
+      ),
+    },
+    {
+      field: "actions",
+      headerName: "Acciones",
+      width: 120,
+      align: "center",
+      headerAlign: "center",
+      sortable: false,
+      renderCell: (params) => {
+        const row = params.row as OrganizationRequest;
+        return (
+          <Tooltip title="Ver detalles">
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={() => router.push(`/super-admin/organization-requests/${row.id}`)}
+            >
+              <VisibilityIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        );
+      },
+    },
+  ];
 
-    const labels = {
-      sent: 'Enviada',
-      pending: 'Pendiente',
-      approved: 'Aprobada',
-      rejected: 'Rechazada',
-      corrections_needed: 'Necesita Correcciones'
-    };
+  // DataTable rows
+  const rows: OrganizationRequest[] = requestsData?.data ?? [];
 
-    return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status as keyof typeof styles] || 'bg-gray-100 text-gray-800'}`}>
-        {labels[status as keyof typeof labels] || status}
-      </span>
-    );
+  // Filtros UI
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+    setCurrentPage(0);
   };
-
-  const handleRequestAction = (requestId: number) => {
-    router.push(`/super-admin/organization-requests/${requestId}`);
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <NavBar />
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <NavBar />
-      
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6 flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Solicitudes de Organizaciones</h1>
-              <p className="text-gray-600">Gestiona las solicitudes de nuevas organizaciones</p>
-            </div>
-            <div className="flex space-x-3">
-              <button
-                onClick={fetchRequests}
-                disabled={loading}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-md transition duration-200 disabled:opacity-50"
-              >
-                {loading ? 'Actualizando...' : '🔄 Actualizar'}
-              </button>
-              <button
-                onClick={() => setShowInviteModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-200"
-              >
-                Enviar Invitación
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+    <DashboardLayout>
+      <Box sx={{ p: 3 }}>
+        {/* Header */}
+        <Box
+          sx={{
+            mb: 3,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+          }}
+        >
+          <Box>
+            <Typography variant="h4" sx={{ fontWeight: 600, color: "text.primary", mb: 1 }}>
+              Solicitudes de Organizaciones
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Gestiona las solicitudes de nuevas organizaciones
+            </Typography>
+          </Box>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setShowInviteModal(true)}
+            sx={{ ml: 2 }}
+          >
+            Enviar Invitación
+          </Button>
+        </Box>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Filters */}
-        <div className="mb-6 flex space-x-4">
-          {['all', 'pending', 'approved', 'rejected', 'corrections_needed'].map((status) => (
-            <button
-              key={status}
-              onClick={() => {
-                setFilter(status);
-                setCurrentPage(1);
+        {/* Stats Cards */}
+        {loading && !requestsData ? (
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "repeat(2, 1fr)",
+                md: "repeat(4, 1fr)",
+              },
+              gap: 3,
+              mb: 4,
+            }}
+          >
+            {[1, 2, 3, 4].map((index) => (
+              <Card key={index}>
+                <CardContent>
+                  <Skeleton variant="text" width="60%" height={24} />
+                  <Skeleton variant="text" width="40%" height={32} sx={{ mt: 1 }} />
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "repeat(2, 1fr)",
+                md: "repeat(4, 1fr)",
+              },
+              gap: 3,
+              mb: 4,
+            }}
+          >
+            <Card>
+              <CardContent>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Total
+                </Typography>
+                <Typography variant="h5" fontWeight={700}>{total}</Typography>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Pendientes
+                </Typography>
+                <Typography variant="h5" fontWeight={700}>{pending}</Typography>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Aprobadas
+                </Typography>
+                <Typography variant="h5" fontWeight={700}>{approved}</Typography>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Rechazadas
+                </Typography>
+                <Typography variant="h5" fontWeight={700}>{rejected + corrections}</Typography>
+              </CardContent>
+            </Card>
+          </Box>
+        )}
+
+        {/* Filtros */}
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+              <FilterListIcon color="action" />
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                Filtros
+              </Typography>
+            </Box>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm: "repeat(2, 1fr)",
+                  md: "repeat(3, 1fr)",
+                },
+                gap: 2,
               }}
-              className={`px-4 py-2 rounded-md font-medium transition duration-200 ${
-                filter === status
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-              }`}
             >
-              {status === 'all' ? 'Todas' : 
-               status === 'pending' ? 'Pendientes' :
-               status === 'approved' ? 'Aprobadas' :
-               status === 'rejected' ? 'Rechazadas' :
-               'Necesitan Correcciones'}
-            </button>
-          ))}
-        </div>
-
-        {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
-            <p className="text-red-700">{error}</p>
-          </div>
-        )}
-
-        {/* Requests Table */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
-          <ul className="divide-y divide-gray-200">
-            {!requests || requests.length === 0 ? (
-              <li className="px-6 py-8 text-center text-gray-500">
-                No hay solicitudes que mostrar
-              </li>
-            ) : (
-              requests.map((request) => (
-                <li key={request.id}>
-                  <div className="px-6 py-4 hover:bg-gray-50 cursor-pointer" onClick={() => handleRequestAction(request.id)}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="text-lg font-medium text-gray-900">
-                              {request.organization_data?.name || 'Sin datos de organización'}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              {request.admin_data?.first_name} {request.admin_data?.last_name} ({request.admin_data?.email})
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Invitado por: {request.created_by ? `${request.created_by.first_name} ${request.created_by.last_name}` : 'Usuario desconocido'}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            {getStatusBadge(request.status.name)}
-                            <p className="text-xs text-gray-500 mt-1">
-                              {new Date(request.created_at).toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        {request.organization_data && (
-                          <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
-                            <div>
-                              <span className="font-medium">Email:</span> {request.organization_data.email}
-                            </div>
-                            <div>
-                              <span className="font-medium">Teléfono:</span> {request.organization_data.phone}
-                            </div>
-                            <div>
-                              <span className="font-medium">Sitio web:</span> {request.organization_data.website_url || 'No especificado'}
-                            </div>
-                          </div>
-                        )}
-
-                        {request.corrections_notes && (
-                          <div className="mt-2 p-3 bg-orange-50 border border-orange-200 rounded-md">
-                            <p className="text-sm text-orange-800">
-                              <span className="font-medium">Correcciones solicitadas:</span> {request.corrections_notes}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                      <div className="ml-4">
-                        <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                </li>
-              ))
-            )}
-          </ul>
-        </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-6 flex justify-center">
-            <nav className="flex space-x-2">
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Anterior
-              </button>
-              
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`px-3 py-2 border border-gray-300 rounded-md text-sm font-medium ${
-                    currentPage === page
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
+              <TextField
+                fullWidth
+                label="Buscar"
+                variant="outlined"
+                size="small"
+                value={filters.search}
+                onChange={(e) => handleFilterChange("search", e.target.value)}
+                placeholder="Nombre, email, admin..."
+              />
+              <FormControl fullWidth size="small">
+                <InputLabel>Estado</InputLabel>
+                <Select
+                  value={filters.status}
+                  label="Estado"
+                  onChange={(e) => handleFilterChange("status", e.target.value)}
                 >
-                  {page}
-                </button>
-              ))}
-              
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Siguiente
-              </button>
-            </nav>
-          </div>
-        )}
-      </div>
+                  {STATUS_OPTIONS.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          </CardContent>
+        </Card>
 
-      {/* Invite Modal */}
-      <SendInvitationModal
-        isOpen={showInviteModal}
-        onClose={() => setShowInviteModal(false)}
-        onSuccess={() => {
-          setShowInviteModal(false);
-          fetchRequests();
-        }}
-      />
-    </div>
+        {/* Tabla de solicitudes */}
+        <DataTable
+          rows={rows}
+          columns={columns}
+          loading={loading}
+          error={error}
+          page={currentPage}
+          onPageChange={setCurrentPage}
+          totalRows={requestsData?.meta.total || 0}
+          onRetry={() => fetchRequests(currentPage + 1, filters)}
+        />
+
+        {/* Modal de invitación */}
+        <SendInvitationModal
+          isOpen={showInviteModal}
+          onClose={() => setShowInviteModal(false)}
+          onSuccess={() => {
+            setShowInviteModal(false);
+            fetchRequests(currentPage + 1, filters);
+          }}
+        />
+
+        {/* Notificaciones */}
+        <NotificationSnackbar
+          open={notificationOpen}
+          notification={notification}
+          onClose={closeNotification}
+        />
+
+        {/* Error Display */}
+        {error && (
+          <Box sx={{ mt: 2 }}>
+            <Card sx={{ bgcolor: "error.light", color: "error.contrastText" }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ mb: 1 }}>
+                  Error
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 2 }}>
+                  {error}
+                </Typography>
+                <Box sx={{ display: "flex", gap: 1 }}>
+                  <Button
+                    size="small"
+                    onClick={() => fetchRequests(currentPage + 1, filters)}
+                    sx={{ color: "inherit" }}
+                  >
+                    Reintentar
+                  </Button>
+                  <Button
+                    size="small"
+                    onClick={clearError}
+                    sx={{ color: "inherit" }}
+                  >
+                    Cerrar
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
+          </Box>
+        )}
+      </Box>
+    </DashboardLayout>
   );
 }
