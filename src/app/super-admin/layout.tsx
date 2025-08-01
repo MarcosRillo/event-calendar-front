@@ -1,13 +1,12 @@
 import ProtectedRoute from '@/components/ProtectedRoute';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
-export default function SuperAdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedRoute requiredRole="super_admin" fallbackPath="/dashboard">
-      {children}
+      <DashboardLayout>
+        {children}
+      </DashboardLayout>
     </ProtectedRoute>
   );
 }

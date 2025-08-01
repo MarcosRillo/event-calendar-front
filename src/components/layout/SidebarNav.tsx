@@ -11,6 +11,7 @@ import {
   Typography,
   Divider,
   Chip,
+  Avatar,
 } from '@mui/material';
 import {
   Dashboard,
@@ -38,9 +39,10 @@ interface NavigationSection {
 
 interface SidebarNavProps {
   onMobileClose?: () => void;
+  logo?: React.ReactNode;
 }
 
-export default function SidebarNav({ onMobileClose }: SidebarNavProps) {
+export default function SidebarNav({ onMobileClose, logo }: SidebarNavProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -132,18 +134,23 @@ export default function SidebarNav({ onMobileClose }: SidebarNavProps) {
   };
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Logo/Brand */}
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography variant="h6" sx={{ color: 'white', fontWeight: 600 }}>
-          Event Calendar
-        </Typography>
-        <Typography variant="body2" sx={{ color: 'grey.400', mt: 0.5 }}>
-          Ente de Turismo
-        </Typography>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }} role="navigation" aria-label="Menú lateral">
+      {/* Logo/Branding */}
+      <Box sx={{ p: 3, textAlign: 'center', minHeight: 80, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {logo ? logo : (
+          <>
+            <Avatar src="https://mui.com/static/logo.png" alt="MUI Logo" sx={{ width: 32, height: 32, bgcolor: 'primary.main', mx: 'auto', mb: 1 }} />
+            <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 700 }}>
+              MUI Panel
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'grey.400', mt: 0.5 }}>
+              Branding temporal
+            </Typography>
+          </>
+        )}
       </Box>
 
-      <Divider sx={{ borderColor: 'grey.700' }} />
+      <Divider sx={{ borderColor: 'grey.200', mb: 1 }} />
 
       {/* Navigation */}
       <Box sx={{ flex: 1, overflow: 'auto', py: 2 }}>
@@ -155,10 +162,11 @@ export default function SidebarNav({ onMobileClose }: SidebarNavProps) {
               sx={{
                 px: 3,
                 py: 1,
-                color: 'grey.400',
+                color: 'grey.600',
                 fontSize: '0.75rem',
                 fontWeight: 600,
                 letterSpacing: '0.1em',
+                textTransform: 'uppercase',
               }}
             >
               {section.title}
@@ -177,38 +185,42 @@ export default function SidebarNav({ onMobileClose }: SidebarNavProps) {
                       selected={active}
                       disabled={item.disabled}
                       sx={{
-                        borderRadius: 0,
+                        borderRadius: 2,
                         mx: 1,
                         mb: 0.5,
+                        transition: 'background 0.2s',
                         '&.Mui-selected': {
-                          bgcolor: 'rgba(59, 130, 246, 0.2)',
+                          bgcolor: 'primary.light',
+                          color: 'primary.contrastText',
                           '&:hover': {
-                            bgcolor: 'rgba(59, 130, 246, 0.3)',
+                            bgcolor: 'primary.main',
                           },
                         },
                         '&:hover': {
-                          bgcolor: 'rgba(255, 255, 255, 0.05)',
+                          bgcolor: 'grey.100',
                         },
                       }}
+                      aria-label={item.label}
+                      role="menuitem"
+                      tabIndex={0}
                     >
                       <ListItemIcon
                         sx={{
-                          color: active ? '#60A5FA' : 'grey.400',
+                          color: active ? 'primary.main' : 'grey.500',
                           minWidth: 40,
+                          transition: 'color 0.2s',
                         }}
                       >
                         <IconComponent />
                       </ListItemIcon>
-                      
                       <ListItemText
                         primary={item.label}
                         primaryTypographyProps={{
-                          fontSize: '0.875rem',
-                          fontWeight: active ? 600 : 400,
-                          color: active ? 'white' : 'grey.300',
+                          fontSize: '0.95rem',
+                          fontWeight: active ? 700 : 400,
+                          color: active ? 'primary.main' : 'grey.800',
                         }}
                       />
-
                       {/* Badge */}
                       {item.badge && (
                         <Chip
@@ -232,7 +244,7 @@ export default function SidebarNav({ onMobileClose }: SidebarNavProps) {
       </Box>
 
       {/* Footer */}
-      <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'grey.700' }}>
+      <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'grey.200' }}>
         <Typography variant="caption" sx={{ color: 'grey.500', textAlign: 'center', display: 'block' }}>
           © 2025 Ente de Turismo de Tucumán
         </Typography>

@@ -9,18 +9,13 @@ import {
   Typography,
   IconButton,
   Avatar,
-  Menu,
-  MenuItem,
-  Divider,
   useTheme,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
   AccountCircle,
-  Logout,
   Settings,
 } from '@mui/icons-material';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import SidebarNav from './SidebarNav';
 
@@ -32,100 +27,71 @@ const DRAWER_WIDTH = 280;
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const theme = useTheme();
-  const router = useRouter();
   const { user, logout } = useAuth();
   
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
-
+  const [mode, setMode] = useState<'light' | 'dark'>(typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const handleThemeToggle = () => {
+    setMode((prev) => (prev === 'light' ? 'dark' : 'light'));
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', mode === 'light' ? 'dark' : 'light');
+    }
+  };
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
-  const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setUserMenuAnchor(event.currentTarget);
-  };
+  // Logo de ejemplo (MUI)
+  const Logo = () => (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Avatar src="https://mui.com/static/logo.png" alt="MUI Logo" sx={{ width: 32, height: 32, bgcolor: 'primary.main' }} />
+      <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>MUI Panel</Typography>
+    </Box>
+  );
 
-  const handleUserMenuClose = () => {
-    setUserMenuAnchor(null);
-  };
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      router.push('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-    handleUserMenuClose();
-  };
-
+  // SidebarNav con branding
   const drawer = (
-    <SidebarNav onMobileClose={() => setMobileOpen(false)} />
+    <SidebarNav onMobileClose={() => setMobileOpen(false)} logo={<Logo />} />
   );
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      {/* AppBar */}
+      {/* AppBar mejorado */}
       <AppBar
         position="fixed"
         sx={{
           width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
           ml: { md: `${DRAWER_WIDTH}px` },
           zIndex: theme.zIndex.drawer + 1,
+          boxShadow: 2,
         }}
+        color="default"
+        role="banner"
+        aria-label="Panel de administración"
       >
-        <Toolbar>
-          {/* Mobile menu button */}
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { md: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
-
-          {/* Title */}
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Event Calendar
-          </Typography>
-
-          {/* User menu */}
+        <Toolbar sx={{ minHeight: 64, display: 'flex', justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {/* Super Admin Badge */}
-            {user?.is_super_admin && (
-              <Box
-                sx={{
-                  bgcolor: 'error.main',
-                  color: 'error.contrastText',
-                  px: 1,
-                  py: 0.5,
-                  borderRadius: 0,
-                  fontSize: '0.75rem',
-                  fontWeight: 500,
-                }}
-              >
-                Super Admin
-              </Box>
-            )}
-
-            {/* User info */}
-            <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' } }}>
-              Bienvenido, {user?.name}
-            </Typography>
-
-            {/* User avatar */}
+            {/* Mobile menu button */}
             <IconButton
-              size="large"
-              aria-label="account of current user"
-              aria-controls="user-menu"
-              aria-haspopup="true"
-              onClick={handleUserMenuOpen}
-              color="inherit"
+              color="primary"
+              aria-label="Abrir menú lateral"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2, display: { md: 'none' } }}
             >
-              <Avatar sx={{ width: 32, height: 32 }}>
+              <MenuIcon />
+            </IconButton>
+            {/* Logo y branding */}
+            <Logo />
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {/* Theme Switcher funcional */}
+            <IconButton aria-label={mode === 'light' ? 'Activar modo oscuro' : 'Activar modo claro'} color="primary" sx={{ mr: 1 }} onClick={handleThemeToggle}>
+              {mode === 'light' ? <Settings /> : <Settings sx={{ color: 'secondary.main' }} />}
+            </IconButton>
+            {/* Acciones rápidas (placeholder) */}
+            <IconButton aria-label="Notificaciones" color="primary">
+              <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
                 <AccountCircle />
               </Avatar>
             </IconButton>
@@ -133,59 +99,36 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </Toolbar>
       </AppBar>
 
-      {/* User Menu */}
-      <Menu
-        id="user-menu"
-        anchorEl={userMenuAnchor}
-        open={Boolean(userMenuAnchor)}
-        onClose={handleUserMenuClose}
-        onClick={handleUserMenuClose}
-        PaperProps={{
-          sx: {
-            mt: 1.5,
-            '& .MuiMenuItem-root': {
-              px: 2,
-              py: 1.5,
-            },
-          },
-        }}
-      >
-        <MenuItem onClick={() => router.push('/profile')}>
-          <Settings sx={{ mr: 2 }} />
-          Configuración
-        </MenuItem>
-        <Divider />
-        <MenuItem onClick={handleLogout}>
-          <Logout sx={{ mr: 2 }} />
-          Cerrar Sesión
-        </MenuItem>
-      </Menu>
+      {/* User Menu: se migrará en el siguiente paso con acciones rápidas y accesibilidad mejorada */}
 
-      {/* Sidebar */}
+      {/* Sidebar mejorado con animaciones y accesibilidad */}
       <Box
         component="nav"
         sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 } }}
+        aria-label="Menú lateral"
+        role="navigation"
       >
-        {/* Mobile drawer */}
+        {/* Mobile drawer con animación */}
         <Drawer
           variant="temporary"
           open={mobileOpen}
           onClose={handleDrawerToggle}
           ModalProps={{
-            keepMounted: true, // Better open performance on mobile
+            keepMounted: true,
           }}
           sx={{
             display: { xs: 'block', md: 'none' },
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
               width: DRAWER_WIDTH,
+              transition: 'width 0.3s',
             },
           }}
         >
           {drawer}
         </Drawer>
 
-        {/* Desktop drawer */}
+        {/* Desktop drawer con animación */}
         <Drawer
           variant="permanent"
           sx={{
@@ -193,6 +136,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
               width: DRAWER_WIDTH,
+              transition: 'width 0.3s',
             },
           }}
           open
@@ -210,10 +154,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           minHeight: '100vh',
           bgcolor: 'background.default',
         }}
+        role="main"
       >
         {/* Toolbar spacer */}
         <Toolbar />
-        
         {/* Page content */}
         <Box sx={{ p: 3 }}>
           {children}
