@@ -162,9 +162,9 @@ export default function SidebarNav({ onMobileClose, logo }: SidebarNavProps) {
               sx={{
                 px: 3,
                 py: 1,
-                color: 'grey.600',
-                fontSize: '0.75rem',
-                fontWeight: 600,
+                color: 'primary.main',
+                fontSize: '0.85rem',
+                fontWeight: 700,
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
               }}
@@ -189,11 +189,15 @@ export default function SidebarNav({ onMobileClose, logo }: SidebarNavProps) {
                         mx: 1,
                         mb: 0.5,
                         transition: 'background 0.2s',
+                        boxShadow: active ? 2 : 0,
+                        bgcolor: active ? 'primary.light' : 'background.paper',
+                        color: active ? 'primary.contrastText' : 'text.primary',
                         '&.Mui-selected': {
-                          bgcolor: 'primary.light',
+                          bgcolor: 'primary.main',
                           color: 'primary.contrastText',
+                          boxShadow: 3,
                           '&:hover': {
-                            bgcolor: 'primary.main',
+                            bgcolor: 'primary.dark',
                           },
                         },
                         '&:hover': {
@@ -216,7 +220,7 @@ export default function SidebarNav({ onMobileClose, logo }: SidebarNavProps) {
                       <ListItemText
                         primary={item.label}
                         primaryTypographyProps={{
-                          fontSize: '0.95rem',
+                          fontSize: '1rem',
                           fontWeight: active ? 700 : 400,
                           color: active ? 'primary.main' : 'grey.800',
                         }}
@@ -228,9 +232,12 @@ export default function SidebarNav({ onMobileClose, logo }: SidebarNavProps) {
                           size="small"
                           color="secondary"
                           sx={{
-                            height: 20,
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
+                            height: 22,
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            bgcolor: 'secondary.light',
+                            color: 'secondary.contrastText',
+                            boxShadow: 1,
                           }}
                         />
                       )}

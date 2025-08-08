@@ -2,6 +2,33 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  TextField,
+  Button,
+  Alert,
+  Container,
+  Paper,
+  Stepper,
+  Step,
+  StepLabel,
+  Avatar,
+  CircularProgress,
+  Stack,
+} from '@mui/material';
+import {
+  Business as BusinessIcon,
+  Person as PersonIcon,
+  Check as CheckIcon,
+  Warning as WarningIcon,
+  Email as EmailIcon,
+  Phone as PhoneIcon,
+  Language as WebsiteIcon,
+  LocationOn as LocationIcon,
+} from '@mui/icons-material';
 import axiosClient from '@/lib/axios';
 
 interface OrganizationData {
@@ -141,228 +168,352 @@ export default function OrganizationRequestForm() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Verificando invitación...</p>
-        </div>
-      </div>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: 'grey.50',
+        }}
+      >
+        <Paper elevation={3} sx={{ p: 4, textAlign: 'center' }}>
+          <CircularProgress size={60} sx={{ mb: 2 }} />
+          <Typography variant="body1" color="text.secondary">
+            Verificando invitación...
+          </Typography>
+        </Paper>
+      </Box>
     );
   }
 
   if (error && !tokenValid) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6 text-center">
-          <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Invitación Inválida</h1>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <button
-            onClick={() => router.push('/')}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-200"
-          >
-            Volver al inicio
-          </button>
-        </div>
-      </div>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: 'grey.50',
+        }}
+      >
+        <Container maxWidth="sm">
+          <Card elevation={6}>
+            <CardContent sx={{ textAlign: 'center', p: 4 }}>
+              <Avatar
+                sx={{
+                  width: 80,
+                  height: 80,
+                  mx: 'auto',
+                  mb: 2,
+                  bgcolor: 'error.main',
+                }}
+              >
+                <WarningIcon sx={{ fontSize: 40 }} />
+              </Avatar>
+              <Typography variant="h4" gutterBottom color="error">
+                Invitación Inválida
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                {error}
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={() => router.push('/')}
+                size="large"
+              >
+                Volver al inicio
+              </Button>
+            </CardContent>
+          </Card>
+        </Container>
+      </Box>
     );
   }
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6 text-center">
-          <div className="text-green-500 text-6xl mb-4">✅</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">¡Solicitud Enviada!</h1>
-          <p className="text-gray-600 mb-6">
-            Tu solicitud de organización ha sido enviada exitosamente. 
-            Recibirás una respuesta por email en breve.
-          </p>
-          <button
-            onClick={() => router.push('/')}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-200"
-          >
-            Continuar
-          </button>
-        </div>
-      </div>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: 'grey.50',
+        }}
+      >
+        <Container maxWidth="sm">
+          <Card elevation={6}>
+            <CardContent sx={{ textAlign: 'center', p: 4 }}>
+              <Avatar
+                sx={{
+                  width: 80,
+                  height: 80,
+                  mx: 'auto',
+                  mb: 2,
+                  bgcolor: 'success.main',
+                }}
+              >
+                <CheckIcon sx={{ fontSize: 40 }} />
+              </Avatar>
+              <Typography variant="h4" gutterBottom color="success.main">
+                ¡Solicitud Enviada!
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                Tu solicitud de organización ha sido enviada exitosamente. 
+                Recibirás una respuesta por email en breve.
+              </Typography>
+              <Button
+                variant="contained" 
+                onClick={() => router.push('/')}
+                size="large"
+              >
+                Continuar
+              </Button>
+            </CardContent>
+          </Card>
+        </Container>
+      </Box>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white shadow-xl rounded-lg overflow-hidden">
-          <div className="bg-blue-600 px-6 py-4">
-            <h1 className="text-2xl font-bold text-white">Solicitud de Organización</h1>
-            <p className="text-blue-100 mt-2">
+    <Box
+      sx={{
+        minHeight: '100vh',
+        bgcolor: 'grey.50',
+        py: 4,
+      }}
+    >
+      <Container maxWidth="lg">
+        <Paper elevation={8} sx={{ overflow: 'hidden' }}>
+          {/* Header */}
+          <Box
+            sx={{
+              bgcolor: 'primary.main',
+              color: 'white',
+              p: 4,
+              textAlign: 'center',
+            }}
+          >
+            <BusinessIcon sx={{ fontSize: 48, mb: 2 }} />
+            <Typography variant="h4" component="h1" gutterBottom>
+              Solicitud de Organización
+            </Typography>
+            <Typography variant="subtitle1">
               Complete el formulario para solicitar la creación de su organización
-            </p>
-          </div>
+            </Typography>
+          </Box>
 
-          <form onSubmit={handleSubmit} className="px-6 py-8 space-y-8">
+          {/* Stepper */}
+          <Box sx={{ p: 3 }}>
+            <Stepper activeStep={0} alternativeLabel>
+              <Step>
+                <StepLabel>Información de la Organización</StepLabel>
+              </Step>
+              <Step>
+                <StepLabel>Información del Administrador</StepLabel>
+              </Step>
+              <Step>
+                <StepLabel>Confirmación</StepLabel>
+              </Step>
+            </Stepper>
+          </Box>
+
+          {/* Form */}
+          <Box component="form" onSubmit={handleSubmit} sx={{ p: 4 }}>
             {/* Información de la Organización */}
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Información de la Organización</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nombre de la Organización *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.organization.name}
-                    onChange={(e) => handleNameChange(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Ej: Cámara de Turismo de Tafí del Valle"
-                  />
-                </div>
+            <Card sx={{ mb: 4 }}>
+              <CardContent>
+                <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
+                  <BusinessIcon color="primary" />
+                  <Typography variant="h6">
+                    Información de la Organización
+                  </Typography>
+                </Stack>
 
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Slug (identificador único)
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.organization.slug}
-                    onChange={(e) => handleOrganizationChange('slug', e.target.value)}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
-                    placeholder="Se genera automáticamente"
-                    readOnly
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Se genera automáticamente basado en el nombre
-                  </p>
-                </div>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+                    gap: 3,
+                  }}
+                >
+                  <Box sx={{ gridColumn: { xs: '1', md: '1 / -1' } }}>
+                    <TextField
+                      fullWidth
+                      label="Nombre de la Organización"
+                      placeholder="Ej: Cámara de Turismo de Tafí del Valle"
+                      value={formData.organization.name}
+                      onChange={(e) => handleNameChange(e.target.value)}
+                      required
+                      InputProps={{
+                        startAdornment: <BusinessIcon color="action" sx={{ mr: 1 }} />,
+                      }}
+                    />
+                  </Box>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Sitio Web
-                  </label>
-                  <input
+                  <Box sx={{ gridColumn: { xs: '1', md: '1 / -1' } }}>
+                    <TextField
+                      fullWidth
+                      label="Slug (identificador único)"
+                      value={formData.organization.slug}
+                      onChange={(e) => handleOrganizationChange('slug', e.target.value)}
+                      required
+                      InputProps={{
+                        readOnly: true,
+                      }}
+                      helperText="Se genera automáticamente basado en el nombre"
+                    />
+                  </Box>
+
+                  <TextField
+                    fullWidth
+                    label="Sitio Web"
                     type="url"
+                    placeholder="https://ejemplo.com"
                     value={formData.organization.website_url}
                     onChange={(e) => handleOrganizationChange('website_url', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="https://ejemplo.com"
+                    InputProps={{
+                      startAdornment: <WebsiteIcon color="action" sx={{ mr: 1 }} />,
+                    }}
                   />
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Teléfono *
-                  </label>
-                  <input
+                  <TextField
+                    fullWidth
+                    label="Teléfono"
                     type="tel"
+                    placeholder="+54 381 123-4567"
                     value={formData.organization.phone}
                     onChange={(e) => handleOrganizationChange('phone', e.target.value)}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="+54 381 123-4567"
+                    InputProps={{
+                      startAdornment: <PhoneIcon color="action" sx={{ mr: 1 }} />,
+                    }}
                   />
-                </div>
 
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Dirección *
-                  </label>
-                  <textarea
-                    value={formData.organization.address}
-                    onChange={(e) => handleOrganizationChange('address', e.target.value)}
-                    required
-                    rows={2}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Dirección completa de la organización"
-                  />
-                </div>
+                  <Box sx={{ gridColumn: { xs: '1', md: '1 / -1' } }}>
+                    <TextField
+                      fullWidth
+                      label="Dirección"
+                      multiline
+                      rows={2}
+                      placeholder="Dirección completa de la organización"
+                      value={formData.organization.address}
+                      onChange={(e) => handleOrganizationChange('address', e.target.value)}
+                      required
+                      InputProps={{
+                        startAdornment: <LocationIcon color="action" sx={{ mr: 1, mt: 1, alignSelf: 'flex-start' }} />,
+                      }}
+                    />
+                  </Box>
 
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email de Contacto *
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.organization.email}
-                    onChange={(e) => handleOrganizationChange('email', e.target.value)}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="contacto@organizacion.com"
-                  />
-                </div>
-              </div>
-            </div>
+                  <Box sx={{ gridColumn: { xs: '1', md: '1 / -1' } }}>
+                    <TextField
+                      fullWidth
+                      label="Email de Contacto"
+                      type="email"
+                      placeholder="contacto@organizacion.com"
+                      value={formData.organization.email}
+                      onChange={(e) => handleOrganizationChange('email', e.target.value)}
+                      required
+                      InputProps={{
+                        startAdornment: <EmailIcon color="action" sx={{ mr: 1 }} />,
+                      }}
+                    />
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
 
             {/* Información del Administrador */}
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Información del Administrador</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nombre *
-                  </label>
-                  <input
-                    type="text"
+            <Card sx={{ mb: 4 }}>
+              <CardContent>
+                <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
+                  <PersonIcon color="primary" />
+                  <Typography variant="h6">
+                    Información del Administrador
+                  </Typography>
+                </Stack>
+
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+                    gap: 3,
+                  }}
+                >
+                  <TextField
+                    fullWidth
+                    label="Nombre"
+                    placeholder="Juan"
                     value={formData.admin.first_name}
                     onChange={(e) => handleAdminChange('first_name', e.target.value)}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Juan"
                   />
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Apellido *
-                  </label>
-                  <input
-                    type="text"
+                  <TextField
+                    fullWidth
+                    label="Apellido"
+                    placeholder="Pérez"
                     value={formData.admin.last_name}
                     onChange={(e) => handleAdminChange('last_name', e.target.value)}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Pérez"
                   />
-                </div>
 
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email del Administrador *
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.admin.email}
-                    onChange={(e) => handleAdminChange('email', e.target.value)}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="admin@organizacion.com"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Este email será usado para acceder al sistema una vez aprobada la solicitud
-                  </p>
-                </div>
-              </div>
-            </div>
+                  <Box sx={{ gridColumn: { xs: '1', md: '1 / -1' } }}>
+                    <TextField
+                      fullWidth
+                      label="Email del Administrador"
+                      type="email"
+                      placeholder="admin@organizacion.com"
+                      value={formData.admin.email}
+                      onChange={(e) => handleAdminChange('email', e.target.value)}
+                      required
+                      helperText="Este será el usuario principal de la organización"
+                      InputProps={{
+                        startAdornment: <EmailIcon color="action" sx={{ mr: 1 }} />,
+                      }}
+                    />
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                <p className="text-red-700 text-sm">{error}</p>
-              </div>
+              <Alert severity="error" sx={{ mb: 3 }}>
+                {error}
+              </Alert>
             )}
 
-            <div className="flex justify-end">
-              <button
+            {/* Submit Button */}
+            <Box sx={{ textAlign: 'center' }}>
+              <Button
                 type="submit"
+                variant="contained"
+                size="large"
                 disabled={submitting}
-                className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-3 px-6 rounded-md transition duration-200 min-w-[200px]"
+                sx={{
+                  py: 2,
+                  px: 6,
+                  fontSize: '1.1rem',
+                  fontWeight: 600,
+                }}
               >
-                {submitting ? 'Enviando...' : 'Enviar Solicitud'}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+                {submitting ? (
+                  <>
+                    <CircularProgress size={20} sx={{ mr: 1 }} />
+                    Enviando solicitud...
+                  </>
+                ) : (
+                  'Enviar Solicitud'
+                )}
+              </Button>
+            </Box>
+          </Box>
+        </Paper>
+      </Container>
+    </Box>
   );
 }

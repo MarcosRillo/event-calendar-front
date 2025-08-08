@@ -1,6 +1,26 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Button,
+  Box,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Switch,
+  FormControlLabel,
+  Alert,
+  CircularProgress,
+  IconButton,
+} from '@mui/material';
+import { Close as CloseIcon, Save as SaveIcon } from '@mui/icons-material';
 import { Organization, UpdateOrganizationData, TrustLevel, User } from '@/types';
 
 interface EditOrganizationModalProps {
@@ -105,214 +125,221 @@ export default function EditOrganizationModal({
     }
   };
 
-  if (!isOpen || !organization) return null;
+  const handleClose = () => {
+    if (!saving) {
+      setErrors({});
+      onClose();
+    }
+  };
+
+  if (!organization) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Editar Organización
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
-              disabled={saving}
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+    <Dialog
+      open={isOpen}
+      onClose={handleClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: { 
+          borderRadius: 2,
+          maxHeight: '90vh'
+        }
+      }}
+    >
+      <DialogTitle sx={{ m: 0, p: 2, pr: 1 }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
+            Editar Organización
+          </Typography>
+          <IconButton
+            aria-label="close"
+            onClick={handleClose}
+            disabled={saving}
+            sx={{
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </DialogTitle>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nombre <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
+      <form onSubmit={handleSubmit}>
+        <DialogContent dividers sx={{ pb: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {/* Basic Information */}
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+                gap: 3,
+              }}
+            >
+              <TextField
+                label="Nombre"
+                required
+                fullWidth
                 value={formData.name || ''}
                 onChange={(e) => handleInputChange('name', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.name ? 'border-red-500' : 'border-gray-300'
-                }`}
+                error={!!errors.name}
+                helperText={errors.name}
                 disabled={saving}
+                variant="outlined"
               />
-              {errors.name && (
-                <p className="mt-1 text-sm text-red-600">{errors.name}</p>
-              )}
-            </div>
-
-            {/* Slug */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Slug <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
+              
+              <TextField
+                label="Slug"
+                required
+                fullWidth
                 value={formData.slug || ''}
                 onChange={(e) => handleInputChange('slug', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.slug ? 'border-red-500' : 'border-gray-300'
-                }`}
+                error={!!errors.slug}
+                helperText={errors.slug || 'Solo letras minúsculas, números y guiones'}
                 disabled={saving}
+                variant="outlined"
               />
-              {errors.slug && (
-                <p className="mt-1 text-sm text-red-600">{errors.slug}</p>
-              )}
-            </div>
 
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <input
+              <TextField
+                label="Email"
                 type="email"
+                fullWidth
                 value={formData.email || ''}
                 onChange={(e) => handleInputChange('email', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.email ? 'border-red-500' : 'border-gray-300'
-                }`}
+                error={!!errors.email}
+                helperText={errors.email}
                 disabled={saving}
+                variant="outlined"
               />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-              )}
-            </div>
 
-            {/* Website URL */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Sitio Web
-              </label>
-              <input
-                type="url"
-                value={formData.website_url || ''}
-                onChange={(e) => handleInputChange('website_url', e.target.value)}
-                placeholder="https://example.com"
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.website_url ? 'border-red-500' : 'border-gray-300'
-                }`}
-                disabled={saving}
-              />
-              {errors.website_url && (
-                <p className="mt-1 text-sm text-red-600">{errors.website_url}</p>
-              )}
-            </div>
-
-            {/* Address */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Dirección
-              </label>
-              <textarea
-                value={formData.address || ''}
-                onChange={(e) => handleInputChange('address', e.target.value)}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={saving}
-              />
-            </div>
-
-            {/* Phone */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Teléfono
-              </label>
-              <input
-                type="tel"
+              <TextField
+                label="Teléfono"
+                fullWidth
                 value={formData.phone || ''}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 disabled={saving}
+                variant="outlined"
               />
-            </div>
+            </Box>
 
-            {/* Admin Selection */}
-            {users.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Administrador
-                </label>
-                <select
-                  value={formData.admin_id || ''}
-                  onChange={(e) => handleInputChange('admin_id', e.target.value ? Number(e.target.value) : undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={saving}
-                >
-                  <option value="">Seleccionar administrador...</option>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.first_name} {user.last_name} ({user.email})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+            <TextField
+              label="Dirección"
+              multiline
+              rows={2}
+              fullWidth
+              value={formData.address || ''}
+              onChange={(e) => handleInputChange('address', e.target.value)}
+              disabled={saving}
+              variant="outlined"
+            />
 
-            {/* Trust Level Selection */}
-            {trustLevels.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nivel de Confianza
-                </label>
-                <select
-                  value={formData.trust_level_id || ''}
-                  onChange={(e) => handleInputChange('trust_level_id', e.target.value ? Number(e.target.value) : undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={saving}
-                >
-                  <option value="">Seleccionar nivel...</option>
-                  {trustLevels.map((level) => (
-                    <option key={level.id} value={level.id}>
-                      {level.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+            <TextField
+              label="Sitio Web"
+              fullWidth
+              value={formData.website_url || ''}
+              onChange={(e) => handleInputChange('website_url', e.target.value)}
+              error={!!errors.website_url}
+              helperText={errors.website_url || 'URL completa (ej: https://example.com)'}
+              disabled={saving}
+              variant="outlined"
+            />
+
+            {/* Admin and Trust Level Selection */}
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { 
+                  xs: '1fr', 
+                  md: `${users.length > 0 ? '1fr' : '0'} ${trustLevels.length > 0 ? '1fr' : '0'}`.trim() || '1fr'
+                },
+                gap: 3,
+              }}
+            >
+              {/* Admin Selection */}
+              {users.length > 0 && (
+                <FormControl fullWidth variant="outlined" disabled={saving}>
+                  <InputLabel>Administrador</InputLabel>
+                  <Select
+                    value={formData.admin_id || ''}
+                    onChange={(e) => handleInputChange('admin_id', e.target.value ? Number(e.target.value) : undefined)}
+                    label="Administrador"
+                  >
+                    <MenuItem value="">
+                      <em>Sin asignar</em>
+                    </MenuItem>
+                    {users.map((user) => (
+                      <MenuItem key={user.id} value={user.id}>
+                        {user.first_name} {user.last_name} ({user.email})
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+
+              {/* Trust Level Selection */}
+              {trustLevels.length > 0 && (
+                <FormControl fullWidth variant="outlined" disabled={saving}>
+                  <InputLabel>Nivel de Confianza</InputLabel>
+                  <Select
+                    value={formData.trust_level_id || ''}
+                    onChange={(e) => handleInputChange('trust_level_id', e.target.value ? Number(e.target.value) : undefined)}
+                    label="Nivel de Confianza"
+                  >
+                    <MenuItem value="">
+                      <em>Sin asignar</em>
+                    </MenuItem>
+                    {trustLevels.map((level) => (
+                      <MenuItem key={level.id} value={level.id}>
+                        {level.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+            </Box>
 
             {/* Active Status */}
-            <div>
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
+            <FormControlLabel
+              control={
+                <Switch
                   checked={formData.is_active ?? true}
                   onChange={(e) => handleInputChange('is_active', e.target.checked)}
-                  className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   disabled={saving}
+                  color="primary"
                 />
-                <span className="text-sm font-medium text-gray-700">
-                  Organización activa
-                </span>
-              </label>
-            </div>
+              }
+              label="Organización Activa"
+            />
 
-            {/* Action Buttons */}
-            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                disabled={saving}
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={saving || isLoading}
-              >
-                {saving ? 'Guardando...' : 'Guardar Cambios'}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+            {/* Display current errors */}
+            {Object.keys(errors).length > 0 && (
+              <Alert severity="error">
+                Por favor, corrige los errores en el formulario antes de continuar.
+              </Alert>
+            )}
+          </Box>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button
+            onClick={handleClose}
+            disabled={saving}
+            variant="outlined"
+            color="inherit"
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            disabled={saving || isLoading}
+            variant="contained"
+            startIcon={saving ? <CircularProgress size={20} /> : <SaveIcon />}
+            sx={{ ml: 1 }}
+          >
+            {saving ? 'Guardando...' : 'Guardar Cambios'}
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
   );
 }

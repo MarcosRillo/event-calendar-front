@@ -2,14 +2,32 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  Box,
+  Card,  
+  CardContent,
+  Typography,
+  Button,
+  Avatar,
+  Alert,
+  Container,
+  Paper,
+  Stack,
+} from '@mui/material';
+import {
+  Logout as LogoutIcon,
+  Dashboard as DashboardIcon,
+  Event as EventIcon,
+} from '@mui/icons-material';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
+import { logger } from '@/lib/logger';
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const handleLogout = async () => {
     setLoading(true);
@@ -17,7 +35,7 @@ export default function Dashboard() {
 
     try {
       await logout();
-      console.log('Logout successful');
+      logger.info('User logout successful');
       router.push('/login');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'An error occurred during logout');
@@ -26,26 +44,146 @@ export default function Dashboard() {
     }
   };
 
+  const handleGoToSuperAdmin = () => {
+    router.push('/super-admin');
+  };
+
   return (
-    <div className="w-full max-w-md mx-auto p-8 bg-white rounded-2xl shadow-xl border border-blue-100 mt-16">
-      <div className="flex flex-col items-center mb-6">
-        <Image src="/globe.svg" alt="Logo Ente de Turismo Tucumán" width={56} height={56} className="mb-2 opacity-90" />
-        <h1 className="text-2xl font-bold text-blue-900 text-center leading-tight mb-1">
-          Panel de Eventos
-        </h1>
-        <span className="text-sm font-medium text-blue-600 text-center">Ente de Turismo de Tucumán</span>
-      </div>
-      <div className="mb-6 text-center">
-        <p className="text-gray-700">Bienvenido al panel de eventos. Aquí podrás gestionar y visualizar los eventos del Ente de Turismo de Tucumán.</p>
-      </div>
-      <button
-        onClick={handleLogout}
-        disabled={loading}
-        className="w-full py-2 px-4 bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-lg transition duration-200 disabled:opacity-50 mb-2"
-      >
-        {loading ? 'Cerrando sesión...' : 'Cerrar sesión'}
-      </button>
-      {error && <p className="text-sm text-red-600 text-center mt-2">{error}</p>}
-    </div>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        bgcolor: 'grey.50',
+        backgroundImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      }}
+    >
+      <Container maxWidth="md">
+        <Paper
+          elevation={24}
+          sx={{
+            p: 4,
+            borderRadius: 3,
+            backdropFilter: 'blur(10px)',
+            bgcolor: 'rgba(255, 255, 255, 0.95)',
+          }}
+        >
+          {/* Header con Logo */}
+          <Box sx={{ textAlign: 'center', mb: 4 }}>
+            <Avatar
+              sx={{
+                width: 80,
+                height: 80,
+                mx: 'auto',
+                mb: 2,
+                bgcolor: 'primary.main',
+                boxShadow: 3,
+              }}
+            >
+              <Image
+                src="/globe.svg"
+                alt="Logo Ente de Turismo Tucumán"
+                width={48}
+                height={48}
+              />
+            </Avatar>
+            <Typography
+              variant="h4"
+              component="h1"
+              gutterBottom
+              sx={{
+                fontWeight: 700,
+                color: 'primary.main',
+                textAlign: 'center',
+              }}
+            >
+              Panel de Eventos
+            </Typography>
+            <Typography
+              variant="subtitle1"
+              color="text.secondary"
+              sx={{ mb: 1 }}
+            >
+              Ente de Turismo de Tucumán
+            </Typography>
+            {user && (
+              <Typography variant="body2" color="text.secondary">
+                Bienvenido, {user.name}
+              </Typography>
+            )}
+          </Box>
+
+          {/* Content */}
+          <Box sx={{ mb: 3 }}>
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+                  <EventIcon color="primary" />
+                  <Typography variant="h6">
+                    Sistema de Gestión de Eventos
+                  </Typography>
+                </Stack>
+                <Typography variant="body1" color="text.secondary">
+                  Bienvenido al panel de eventos. Aquí podrás gestionar y visualizar 
+                  los eventos del Ente de Turismo de Tucumán.
+                </Typography>
+              </CardContent>
+            </Card>
+          </Box>
+
+          {/* Action Cards */}
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+              gap: 3,
+            }}
+          >
+            <Card sx={{ cursor: 'pointer' }} onClick={handleGoToSuperAdmin}>
+              <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                <DashboardIcon 
+                  sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} 
+                />
+                <Typography variant="h6" gutterBottom>
+                  Panel de Administración
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Accede al panel completo de administración del sistema
+                </Typography>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                <LogoutIcon 
+                  sx={{ fontSize: 48, color: 'error.main', mb: 2 }} 
+                />
+                <Typography variant="h6" gutterBottom>
+                  Cerrar Sesión
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Salir del sistema de forma segura
+                </Typography>
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={handleLogout}
+                  disabled={loading}
+                  sx={{ mt: 1 }}
+                >
+                  {loading ? 'Cerrando sesión...' : 'Cerrar sesión'}
+                </Button>
+              </CardContent>
+            </Card>
+          </Box>
+
+          {error && (
+            <Alert severity="error" sx={{ mt: 3 }}>
+              {error}
+            </Alert>
+          )}
+        </Paper>
+      </Container>
+    </Box>
   );
 }

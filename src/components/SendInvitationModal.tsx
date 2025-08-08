@@ -1,7 +1,25 @@
 "use client";
 
 import { useState } from 'react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Button,
+  Alert,
+  Box,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  CircularProgress,
+  Typography,
+} from '@mui/material';
+import { Send as SendIcon } from '@mui/icons-material';
 import axiosClient from '@/lib/axios';
+import NotificationSnackbar, { useNotifications } from '@/components/ui/NotificationSnackbar';
 
 interface SendInvitationModalProps {
   isOpen: boolean;
@@ -19,6 +37,12 @@ export default function SendInvitationModal({ isOpen, onClose, onSuccess }: Send
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const {
+    notification,
+    open: notificationOpen,
+    showSuccess,
+    closeNotification
+  } = useNotifications();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +65,7 @@ export default function SendInvitationModal({ isOpen, onClose, onSuccess }: Send
         onClose();
         
         // Show success message
-        alert(`Invitación enviada exitosamente a ${formData.email}`);
+        showSuccess(`Invitación enviada exitosamente a ${formData.email}`);
       }
     } catch (error) {
       console.error('Error sending invitation:', error);
@@ -60,114 +84,137 @@ export default function SendInvitationModal({ isOpen, onClose, onSuccess }: Send
     if (error) setError('');
   };
 
-  if (!isOpen) return null;
+  const handleClose = () => {
+    if (!loading) {
+      setFormData({
+        email: '',
+        organization_name: '',
+        contact_name: '',
+        expires_days: 30,
+        message: ''
+      });
+      setError('');
+      onClose();
+    }
+  };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div className="mt-3">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
-            Enviar Invitación de Organización
-          </h3>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email del destinatario *
-              </label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleChange('email', e.target.value)}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="ejemplo@email.com"
-              />
-            </div>
+    <>
+    <Dialog
+      open={isOpen}
+      onClose={handleClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: { borderRadius: 2 }
+      }}
+    >
+      <DialogTitle>
+        <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
+          Enviar Invitación de Organización
+        </Typography>
+      </DialogTitle>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nombre de la organización *
-              </label>
-              <input
-                type="text"
-                value={formData.organization_name}
-                onChange={(e) => handleChange('organization_name', e.target.value)}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Nombre de la organización"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nombre del contacto *
-              </label>
-              <input
-                type="text"
-                value={formData.contact_name}
-                onChange={(e) => handleChange('contact_name', e.target.value)}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Nombre completo del contacto"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Días hasta expiración
-              </label>
-              <select
-                value={formData.expires_days}
-                onChange={(e) => handleChange('expires_days', parseInt(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value={7}>7 días</option>
-                <option value={15}>15 días</option>
-                <option value={30}>30 días</option>
-                <option value={60}>60 días</option>
-                <option value={90}>90 días</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Mensaje personalizado (opcional)
-              </label>
-              <textarea
-                value={formData.message}
-                onChange={(e) => handleChange('message', e.target.value)}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Mensaje adicional para incluir en la invitación..."
-              />
-            </div>
-
+      <form onSubmit={handleSubmit}>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 1 }}>
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                <p className="text-red-700 text-sm">{error}</p>
-              </div>
+              <Alert severity="error">
+                {error}
+              </Alert>
             )}
 
-            <div className="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-md transition duration-200"
+            <TextField
+              label="Email del destinatario"
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleChange('email', e.target.value)}
+              required
+              fullWidth
+              placeholder="ejemplo@email.com"
+              disabled={loading}
+              variant="outlined"
+            />
+
+            <TextField
+              label="Nombre de la organización"
+              type="text"
+              value={formData.organization_name}
+              onChange={(e) => handleChange('organization_name', e.target.value)}
+              required
+              fullWidth
+              placeholder="Nombre de la organización"
+              disabled={loading}
+              variant="outlined"
+            />
+
+            <TextField
+              label="Nombre del contacto"
+              type="text"
+              value={formData.contact_name}
+              onChange={(e) => handleChange('contact_name', e.target.value)}
+              required
+              fullWidth
+              placeholder="Nombre completo del contacto"
+              disabled={loading}
+              variant="outlined"
+            />
+
+            <FormControl fullWidth variant="outlined" disabled={loading}>
+              <InputLabel>Días hasta expiración</InputLabel>
+              <Select
+                value={formData.expires_days}
+                onChange={(e) => handleChange('expires_days', parseInt(String(e.target.value)))}
+                label="Días hasta expiración"
               >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-md transition duration-200"
-              >
-                {loading ? 'Enviando...' : 'Enviar Invitación'}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+                <MenuItem value={7}>7 días</MenuItem>
+                <MenuItem value={15}>15 días</MenuItem>
+                <MenuItem value={30}>30 días</MenuItem>
+                <MenuItem value={60}>60 días</MenuItem>
+                <MenuItem value={90}>90 días</MenuItem>
+              </Select>
+            </FormControl>
+
+            <TextField
+              label="Mensaje personalizado (opcional)"
+              multiline
+              rows={3}
+              value={formData.message}
+              onChange={(e) => handleChange('message', e.target.value)}
+              fullWidth
+              placeholder="Mensaje adicional para incluir en la invitación..."
+              disabled={loading}
+              variant="outlined"
+            />
+          </Box>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button
+            onClick={handleClose}
+            disabled={loading}
+            variant="outlined"
+            color="inherit"
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            disabled={loading}
+            variant="contained"
+            startIcon={loading ? <CircularProgress size={20} /> : <SendIcon />}
+            sx={{ ml: 1 }}
+          >
+            {loading ? 'Enviando...' : 'Enviar Invitación'}
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
+    <NotificationSnackbar
+      notification={notification}
+      open={notificationOpen}
+      onClose={closeNotification}
+    />
+    </>
   );
 }

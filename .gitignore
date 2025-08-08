@@ -39,3 +39,39 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Archivos temporales y backup
+*.backup.*
+*.new.*
+*.old.*
+*-backup.*
+*-new.*
+*-original.*
+*-temp.*
+
+# Logs y archivos temporales
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Archivos de editor y sistema
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# Archivos de testing y coverage
+coverage/
+*.lcov
+.nyc_output
+
+# Archivos de análisis
+.analyzebundlesize
+
+# Archivos de cookies y datos temporales
+cookies.txt

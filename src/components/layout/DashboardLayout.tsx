@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, ReactNode } from 'react';
+import { Dashboard, People, Business, Event, Assignment, Settings } from '@mui/icons-material';
 import {
   Box,
   Drawer,
@@ -14,10 +15,9 @@ import {
 import {
   Menu as MenuIcon,
   AccountCircle,
-  Settings,
 } from '@mui/icons-material';
-import { useAuth } from '@/hooks/useAuth';
-import SidebarNav from './SidebarNav';
+import SidebarNavFlex from './SidebarNav.flex';
+import { SidebarNavConfig } from './SidebarNav.types';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -27,7 +27,6 @@ const DRAWER_WIDTH = 280;
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const theme = useTheme();
-  const { user, logout } = useAuth();
   
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mode, setMode] = useState<'light' | 'dark'>(typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
@@ -49,9 +48,66 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     </Box>
   );
 
-  // SidebarNav con branding
+
+  // Estructura de navegación flexible
+  const navigation: SidebarNavConfig = [
+    { kind: "header", title: "Principal" },
+    {
+      segment: "dashboard",
+      title: "Dashboard",
+      icon: <Dashboard />,
+      href: "/super-admin",
+      pattern: "/super-admin",
+    },
+    { kind: "divider" },
+    { kind: "header", title: "Gestión" },
+    {
+      kind: "group",
+      title: "Gestión",
+      icon: <Settings />,
+      children: [
+        {
+          segment: "users",
+          title: "Usuarios",
+          icon: <People />,
+          href: "/super-admin/users",
+        },
+        {
+          segment: "organizations",
+          title: "Organizaciones",
+          icon: <Business />,
+          href: "/super-admin/organizations",
+        },
+        {
+          segment: "events",
+          title: "Eventos",
+          icon: <Event />,
+          href: "/super-admin/events",
+        },
+      ],
+    },
+    { kind: "divider" },
+    {
+      segment: "organization-requests",
+      title: "Solicitudes de Organizaciones",
+      icon: <Assignment />,
+      href: "/super-admin/organization-requests",
+      badge: "3",
+    },
+  ];
+
+  // SidebarNavFlex con branding y footer
   const drawer = (
-    <SidebarNav onMobileClose={() => setMobileOpen(false)} logo={<Logo />} />
+    <SidebarNavFlex
+      navigation={navigation}
+      logo={<Logo />}
+      onMobileClose={() => setMobileOpen(false)}
+      footer={
+        <Typography variant="caption" sx={{ color: "grey.500", textAlign: "center", display: "block" }}>
+          © 2025 Ente de Turismo de Tucumán
+        </Typography>
+      }
+    />
   );
 
   return (

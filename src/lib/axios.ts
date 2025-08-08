@@ -22,18 +22,41 @@ const getCsrfToken = async () => {
   }
 };
 
-// Función para obtener el token del storage
+// Función para obtener el token del storage de forma segura
 const getAuthToken = () => {
   if (typeof window === 'undefined') return null;
   
   try {
     const authData = localStorage.getItem('auth-storage');
-    if (authData) {
-      const parsed = JSON.parse(authData);
-      return parsed.state?.token || null;
+    if (!authData) return null;
+    
+    const parsed = JSON.parse(authData);
+    const token = parsed.state?.token;
+    
+    // Validar que el token existe y tiene formato JWT válido
+    if (token && typeof token === 'string' && token.split('.').length === 3) {
+      // Opcional: Verificar que el token no esté expirado
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const now = Math.floor(Date.now() / 1000);
+        
+        // Si el token tiene exp y está expirado, no lo devolvemos
+        if (payload.exp && payload.exp < now) {
+          console.warn('Token expired, removing from storage');
+          localStorage.removeItem('auth-storage');
+          return null;
+        }
+        
+        return token;
+      } catch {
+        // Si no se puede parsear el token, lo consideramos válido por retrocompatibilidad
+        return token;
+      }
     }
   } catch (error) {
-    console.error('Error obteniendo token del storage:', error);
+    console.warn('Token parsing error:', error);
+    // Limpiar datos corruptos automáticamente
+    localStorage.removeItem('auth-storage');
   }
   return null;
 };

@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { logger } from '@/lib/logger';
 
 interface LoginFormData {
   email: string;
@@ -36,7 +37,7 @@ export function useLoginForm() {
 
     try {
       await login(formData.email, formData.password);
-      console.log('Login successful');
+      logger.info('User login successful', { email: formData.email });
       router.push('/dashboard');
     } catch (err: unknown) {
       setError(
