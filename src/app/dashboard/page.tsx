@@ -13,19 +13,23 @@ import {
   Container,
   Paper,
   Stack,
+  Chip,
 } from '@mui/material';
 import {
   Logout as LogoutIcon,
   Dashboard as DashboardIcon,
   Event as EventIcon,
+  Palette as PaletteIcon,
 } from '@mui/icons-material';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { logger } from '@/lib/logger';
+import { TucumanDesignDemo } from '@/components/demo/TucumanDesignDemo';
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showTucumanDemo, setShowTucumanDemo] = useState(false);
   const router = useRouter();
   const { logout, user } = useAuth();
 
@@ -47,6 +51,40 @@ export default function Dashboard() {
   const handleGoToSuperAdmin = () => {
     router.push('/super-admin');
   };
+
+  // Si se está mostrando la demo, renderizar solo la demo
+  if (showTucumanDemo) {
+    return (
+      <Box>
+        <Box 
+          sx={{ 
+            position: 'fixed', 
+            top: 16, 
+            right: 16, 
+            zIndex: 1300,
+            display: 'flex',
+            gap: 1,
+          }}
+        >
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setShowTucumanDemo(false)}
+            sx={{ 
+              backgroundColor: 'rgba(0,0,0,0.8)', 
+              color: 'white',
+              '&:hover': {
+                backgroundColor: 'rgba(0,0,0,0.9)',
+              },
+            }}
+          >
+            Volver al Dashboard
+          </Button>
+        </Box>
+        <TucumanDesignDemo />
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -135,7 +173,7 @@ export default function Dashboard() {
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
               gap: 3,
             }}
           >
@@ -150,6 +188,26 @@ export default function Dashboard() {
                 <Typography variant="body2" color="text.secondary">
                   Accede al panel completo de administración del sistema
                 </Typography>
+              </CardContent>
+            </Card>
+
+            <Card sx={{ cursor: 'pointer' }} onClick={() => setShowTucumanDemo(true)}>
+              <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                <PaletteIcon 
+                  sx={{ fontSize: 48, color: 'secondary.main', mb: 2 }} 
+                />
+                <Typography variant="h6" gutterBottom>
+                  Demo Diseño Tucumán
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Explora el nuevo diseño inspirado en Tucumán Turismo
+                </Typography>
+                <Chip 
+                  label="¡Nuevo!" 
+                  size="small" 
+                  color="secondary" 
+                  sx={{ mt: 1 }}
+                />
               </CardContent>
             </Card>
 
